@@ -18,8 +18,79 @@ const admins = new Set([SEEDED_ADMIN, ...extraAdmins])
 const sites = new Map()
 /** @type {Map<string, object>} */
 const rooms = new Map()
+/** @type {Map<string, object>} */
+const cycles = new Map()
+/** @type {Map<string, object>} */
+const entries = new Map()
 /** @type {object[]} */
 const contactRequests = []
+
+function seedDemoGrows() {
+  sites.set('athena-demo', {
+    id: 'athena-demo',
+    name: 'Athena Demo',
+    location: 'NY',
+    targets: {},
+    aroya_facility_id: null,
+    owner_id: userIdFor('mock-owner@fertigationbinder.demo'),
+    owner_email: 'mock-owner@fertigationbinder.demo',
+    pin_hash: 'demo',
+    status: 'active',
+    created_at: '2026-08-29T18:31:34.026Z',
+    aroya_key_saved: false,
+  })
+  sites.set('pending-example', {
+    id: 'pending-example',
+    name: 'Pending Example',
+    location: 'Local',
+    targets: {},
+    aroya_facility_id: null,
+    owner_id: userIdFor('owner@local.test'),
+    owner_email: 'owner@local.test',
+    pin_hash: 'pending',
+    status: 'pending',
+    created_at: '2026-08-29T19:00:00.000Z',
+    aroya_key_saved: false,
+  })
+  for (let i = 1; i <= 10; i += 1) {
+    const roomId = `f${i}`
+    rooms.set(roomId, {
+      id: roomId,
+      site_id: 'athena-demo',
+      name: `Flower ${String(i).padStart(2, '0')}`,
+      type: 'flower',
+      max_zones: 1,
+      sort_order: i,
+      aroya_room_id: null,
+    })
+    const cycleId = `cycle-${roomId}`
+    cycles.set(cycleId, {
+      id: cycleId,
+      room_id: roomId,
+      number: 1,
+      start_date: '2026-08-20',
+      status: 'in_progress',
+    })
+    entries.set(`entry-${roomId}`, {
+      id: `entry-${roomId}`,
+      room_id: roomId,
+      date: '2026-08-28',
+      zone: 1,
+      cultivar: null,
+      feed_ml: 2200,
+      feed_ec: 2.1,
+      feed_ph: 5.9,
+      runoff_ml: 400,
+      runoff_ec: 2.4,
+      runoff_ph: 5.8,
+      notes: 'Demo log',
+      created_at: '2026-08-28T12:00:00.000Z',
+      tech: 'AB',
+    })
+  }
+}
+
+seedDemoGrows()
 
 function json(res, status, body, extra = {}) {
   const payload = JSON.stringify(body)
@@ -135,6 +206,14 @@ function eqParam(url, column) {
   const value = url.searchParams.get(column)
   if (!value) return null
   return String(value).replace(/^eq\./, '')
+}
+
+function inParam(url, column) {
+  const value = url.searchParams.get(column)
+  if (!value) return null
+  const match = String(value).match(/^in\.\((.*)\)$/)
+  if (!match) return null
+  return match[1].split(',').map((part) => part.trim()).filter(Boolean)
 }
 
 function visibleSites(auth) {
@@ -270,7 +349,10 @@ const server = http.createServer(async (req, res) => {
 
   if (path === '/rest/v1/sites') {
     if (req.method === 'GET') {
-      const rows = visibleSites(auth).map((site) => sitePublic(site, Boolean(auth)))
+      const id = eqParam(url, 'id')
+      const rows = visibleSites(auth)
+        .filter((site) => !id || site.id === id)
+        .map((site) => sitePublic(site, Boolean(auth)))
       json(res, 200, rows)
       return
     }
@@ -299,7 +381,20 @@ const server = http.createServer(async (req, res) => {
       })
       return
     }
-    if (req.method === 'PATCH' || req.method === 'DELETE') {
+    if (req.method === 'PATCH') {
+      const id = eqParam(url, 'id')
+      const site = id ? sites.get(id) : null
+      if (!site) {
+        json(res, 404, { message: 'Facility not found' })
+        return
+      }
+      Object.assign(site, await readBody(req))
+      json(res, 200, sitePublic(site, true), {
+        'Content-Type': 'application/vnd.pgrst.object+json',
+      })
+      return
+    }
+    if (req.method === 'DELETE') {
       json(res, 200, {})
       return
     }
@@ -327,6 +422,42 @@ const server = http.createServer(async (req, res) => {
       json(res, 201, row, { 'Content-Type': 'application/vnd.pgrst.object+json' })
       return
     }
+    if (req.method === 'PATCH') {
+      const id = eqParam(url, 'id')
+      const room = id ? rooms.get(id) : null
+      if (!room) {
+        json(res, 404, { message: 'Room not found' })
+        return
+      }
+      Object.assign(room, await readBody(req))
+      json(res, 200, room, { 'Content-Type': 'application/vnd.pgrst.object+json' })
+      return
+    }
+    if (req.method === 'DELETE') {
+      const id = eqParam(url, 'id')
+      if (id) rooms.delete(id)
+      json(res, 200, {})
+      return
+    }
+  }
+
+  if (path === '/rest/v1/cycles') {
+    const ids = inParam(url, 'room_id')
+    const rows = [...cycles.values()].filter((cycle) => !ids || ids.includes(cycle.room_id))
+    json(res, 200, rows)
+    return
+  }
+
+  if (path === '/rest/v1/entries') {
+    const roomId = eqParam(url, 'room_id')
+    const since = String(url.searchParams.get('date') || '').replace(/^gte\./, '')
+    const rows = [...entries.values()].filter((entry) => {
+      if (roomId && entry.room_id !== roomId) return false
+      if (since && entry.date < since) return false
+      return true
+    })
+    json(res, 200, rows)
+    return
   }
 
   json(res, 404, { message: `No mock for ${req.method} ${path}` })

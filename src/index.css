@@ -822,6 +822,41 @@ a.linkish:hover {
   gap: 8px;
 }
 
+.admin-actions .btn-owner-view {
+  grid-column: 1 / -1;
+}
+
+.admin-card-featured {
+  box-shadow: inset 4px 0 0 var(--cyan), 0 0 0 1px var(--line-strong), var(--shadow);
+}
+
+.support-banner {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 19;
+  display: grid;
+  gap: 10px;
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid var(--line-strong);
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.28), rgba(7, 20, 15, 0.96));
+}
+
+.support-banner-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.support-banner-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.app-main.support-main {
+  padding-top: 12px;
+}
+
 .chip.status-pending {
   background: rgba(229, 160, 13, 0.16);
   color: var(--warn);

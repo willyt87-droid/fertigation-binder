@@ -10,6 +10,7 @@ import {
   type AdminFacility,
   type ContactRequest,
 } from '../lib/api'
+import { facilityStatusLabel, isDemoGrow, sortAdminFacilities } from '../lib/admin'
 import { formatTimestamp } from '../lib/format'
 import type { Room, SiteStatus } from '../types'
 
@@ -18,6 +19,8 @@ type AdminDashboardProps = {
   adminEmail: string
   onSignOut: () => void
   onChangeConnection?: () => void
+  onViewAsOwner: (facility: AdminFacility) => void
+  viewError?: string | null
 }
 
 export function AdminDashboard({
@@ -25,6 +28,8 @@ export function AdminDashboard({
   adminEmail,
   onSignOut,
   onChangeConnection,
+  onViewAsOwner,
+  viewError,
 }: AdminDashboardProps) {
   const [queue, setQueue] = useState<AdminFacility[]>([])
   const [asks, setAsks] = useState<ContactRequest[]>([])
@@ -37,7 +42,7 @@ export function AdminDashboard({
   const refresh = useCallback(async () => {
     setError(null)
     try {
-      setQueue(await listAdminFacilities(client))
+        setQueue(sortAdminFacilities(await listAdminFacilities(client)))
       try {
         setAsks(await listContactRequests(client))
       } catch {
@@ -98,12 +103,13 @@ export function AdminDashboard({
       <div className="admin-hero">
         <h1>Newcomers</h1>
         <p className="lede">
-          {adminEmail} · operator console. Approve facilities before floor PIN unlock. You are not a
-          facility owner — no onboarding here.
+          {adminEmail} · operator console. Approve facilities before floor PIN unlock. View as owner
+          opens that grow’s dashboard for support — not the floor cart, not a tech login.
         </p>
       </div>
 
       {error ? <div className="error">{error}</div> : null}
+      {viewError ? <div className="error">{viewError}</div> : null}
 
       <h2 className="group-title">Asks</h2>
       {asks.length === 0 ? (
@@ -145,13 +151,19 @@ export function AdminDashboard({
       ) : (
         <div className="stack">
           {queue.map((facility) => (
-            <article key={facility.id} className="admin-card">
+            <article
+              key={facility.id}
+              className={isDemoGrow(facility) ? 'admin-card admin-card-featured' : 'admin-card'}
+            >
               <div className="admin-card-top">
                 <div>
+                  {isDemoGrow(facility) ? <p className="kicker">Demo grow · first click</p> : null}
                   <h3>{facility.name}</h3>
                   <p className="quiet">{facility.location || 'No location'}</p>
                 </div>
-                <span className={`chip status-${facility.status}`}>{facility.status}</span>
+                <span className={`chip status-${facility.status}`}>
+                  {facilityStatusLabel(facility.status)}
+                </span>
               </div>
               <dl className="admin-meta">
                 <div>
@@ -170,7 +182,15 @@ export function AdminDashboard({
               <div className="admin-actions">
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="btn btn-primary btn-owner-view"
+                  disabled={busyId === facility.id}
+                  onClick={() => onViewAsOwner(facility)}
+                >
+                  View as owner
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
                   disabled={busyId === facility.id || facility.status === 'active'}
                   onClick={() => void setStatus(facility, 'active')}
                 >
@@ -232,7 +252,10 @@ export function AdminDashboard({
             setOpenRooms([])
           }}
         >
-          <p className="lede">Read-only. Status changes happen on the queue — no owner impersonation.</p>
+          <p className="lede">
+            Queue detail is read-only. View as owner opens the owner dashboard for support without a
+            PIN or tech login.
+          </p>
           <div className="stack">
             <div className="card">
               <div className="quiet">Owner</div>
@@ -241,8 +264,16 @@ export function AdminDashboard({
                 {open.location || 'No location'} · {formatTimestamp(open.created_at)}
               </div>
               <div style={{ marginTop: 10 }}>
-                <span className={`chip status-${open.status}`}>{open.status}</span>
+                <span className={`chip status-${open.status}`}>{facilityStatusLabel(open.status)}</span>
               </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: '100%', marginTop: 12 }}
+                onClick={() => onViewAsOwner(open)}
+              >
+                View as owner
+              </button>
             </div>
             <div className="card">
               <p className="kicker">AROYA</p>

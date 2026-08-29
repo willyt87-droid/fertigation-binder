@@ -1,4 +1,4 @@
-import type { Cycle, Entry, Room } from '../types'
+import type { Cycle, Entry, Room, StageKey } from '../types'
 import { feedMlTone, stageForCycle, toneForTarget } from '../lib/bands'
 import { formatDate, formatEc, formatMl, formatPct, formatPh, formatRoPct } from '../lib/format'
 import { formatRange, rangeHasValues, type FacilityTargets } from '../lib/targets'
@@ -13,6 +13,7 @@ type RoomScreenProps = {
   onStartCycle: () => void
   onAddEntry: () => void
   onEditEntry: (entry: Entry) => void
+  readOnly?: boolean
 }
 
 export function RoomScreen({
@@ -23,6 +24,7 @@ export function RoomScreen({
   onStartCycle,
   onAddEntry,
   onEditEntry,
+  readOnly = false,
 }: RoomScreenProps) {
   const flower = room.type === 'flower'
   const stage = cycle ? stageForCycle(cycle.start_date) : null
@@ -62,7 +64,11 @@ export function RoomScreen({
         ) : null}
       </div>
 
-      {needsCycle ? (
+      {readOnly ? (
+        <p className="lede">
+          Support view — logs are read-only. Floor collections stay on the PIN cart.
+        </p>
+      ) : needsCycle ? (
         <div className="form-card stack" style={{ marginBottom: 14 }}>
           <p className="lede" style={{ marginBottom: 0 }}>
             Flower rooms collect against the active cycle. Start a cycle to add entries.
@@ -78,69 +84,97 @@ export function RoomScreen({
       )}
 
       <div className="stack">
-        {entries.length === 0 && !needsCycle ? (
-          <div className="empty-slot">No entries in the active cycle yet.</div>
+        {entries.length === 0 ? (
+          <div className="empty-slot">
+            {needsCycle ? 'No active cycle yet.' : 'No entries in the active cycle yet.'}
+          </div>
         ) : null}
-        {entries.map((entry) => {
-          const ro = formatRoPct(entry.feed_ml, entry.runoff_ml)
-          const color = entry.tech ? techColor(entry.tech) : null
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              className="entry-card"
-              onClick={() => onEditEntry(entry)}
-            >
-              <div className="entry-top">
-                <div>
-                  <div className="entry-id">
-                    {formatDate(entry.date)} · Z{entry.zone}
-                    {entry.cultivar ? ` · ${entry.cultivar}` : ''}
-                  </div>
-                  <div className="entry-sub">{entry.notes || 'No notes'}</div>
-                </div>
-                {entry.tech && color ? (
-                  <span className="tech-chip" style={{ background: color, color: chipInk(color) }}>
-                    {entry.tech}
-                  </span>
-                ) : null}
-              </div>
-              <div className="metrics">
-                <ToneValue
-                  label="Feed mL"
-                  value={formatMl(entry.feed_ml)}
-                  tone={feedMlTone(entry.feed_ml, stage?.key ?? null, targets)}
-                />
-                <ToneValue
-                  label="Feed pH"
-                  value={formatPh(entry.feed_ph)}
-                  tone={toneForTarget(entry.feed_ph, targets.binder.feedPh)}
-                />
-                <ToneValue
-                  label="Feed EC"
-                  value={formatEc(entry.feed_ec)}
-                  tone={toneForTarget(entry.feed_ec, targets.binder.feedEc)}
-                />
-                <ToneValue
-                  label="RO %"
-                  value={formatPct(ro)}
-                  tone={toneForTarget(ro, targets.binder.roPct)}
-                />
-                <ToneValue
-                  label="RO pH"
-                  value={formatPh(entry.runoff_ph)}
-                  tone={toneForTarget(entry.runoff_ph, targets.binder.roPh)}
-                />
-                <ToneValue
-                  label="RO mL"
-                  value={formatMl(entry.runoff_ml)}
-                  tone={toneForTarget(entry.runoff_ml, targets.binder.runoffMl)}
-                />
-              </div>
-            </button>
-          )
-        })}
+        {entries.map((entry) => (
+          <EntryCard
+            key={entry.id}
+            entry={entry}
+            stageKey={stage?.key ?? null}
+            targets={targets}
+            readOnly={readOnly}
+            onEdit={onEditEntry}
+          />
+        ))}
       </div>
     </div>
+  )
+}
+
+function EntryCard({
+  entry,
+  stageKey,
+  targets,
+  readOnly,
+  onEdit,
+}: {
+  entry: Entry
+  stageKey: StageKey | null
+  targets: FacilityTargets
+  readOnly: boolean
+  onEdit: (entry: Entry) => void
+}) {
+  const ro = formatRoPct(entry.feed_ml, entry.runoff_ml)
+  const color = entry.tech ? techColor(entry.tech) : null
+  const body = (
+    <>
+      <div className="entry-top">
+        <div>
+          <div className="entry-id">
+            {formatDate(entry.date)} · Z{entry.zone}
+            {entry.cultivar ? ` · ${entry.cultivar}` : ''}
+          </div>
+          <div className="entry-sub">{entry.notes || 'No notes'}</div>
+        </div>
+        {entry.tech && color ? (
+          <span className="tech-chip" style={{ background: color, color: chipInk(color) }}>
+            {entry.tech}
+          </span>
+        ) : null}
+      </div>
+      <div className="metrics">
+        <ToneValue
+          label="Feed mL"
+          value={formatMl(entry.feed_ml)}
+          tone={feedMlTone(entry.feed_ml, stageKey, targets)}
+        />
+        <ToneValue
+          label="Feed pH"
+          value={formatPh(entry.feed_ph)}
+          tone={toneForTarget(entry.feed_ph, targets.binder.feedPh)}
+        />
+        <ToneValue
+          label="Feed EC"
+          value={formatEc(entry.feed_ec)}
+          tone={toneForTarget(entry.feed_ec, targets.binder.feedEc)}
+        />
+        <ToneValue
+          label="RO %"
+          value={formatPct(ro)}
+          tone={toneForTarget(ro, targets.binder.roPct)}
+        />
+        <ToneValue
+          label="RO pH"
+          value={formatPh(entry.runoff_ph)}
+          tone={toneForTarget(entry.runoff_ph, targets.binder.roPh)}
+        />
+        <ToneValue
+          label="RO mL"
+          value={formatMl(entry.runoff_ml)}
+          tone={toneForTarget(entry.runoff_ml, targets.binder.runoffMl)}
+        />
+      </div>
+    </>
+  )
+  if (readOnly) {
+    return <div className="entry-card">{body}</div>
+  }
+  return (
+    <button type="button" className="entry-card" onClick={() => onEdit(entry)}>
+      {body}
+    </button>
   )
 }

@@ -7,9 +7,16 @@ type HeaderProps = {
   showSites?: boolean
   onSites?: () => void
   admin?: boolean
+  support?: boolean
 }
 
-export function Header({ siteName, showSites = true, onSites, admin = false }: HeaderProps) {
+export function Header({
+  siteName,
+  showSites = true,
+  onSites,
+  admin = false,
+  support = false,
+}: HeaderProps) {
   const [clock, setClock] = useState(() => clockLabel())
 
   useEffect(() => {
@@ -24,7 +31,9 @@ export function Header({ siteName, showSites = true, onSites, admin = false }: H
         <Droplet />
         <div className="brand-copy">
           <div className="brand-title">The Fertigation Binder</div>
-          {admin ? (
+          {support && siteName ? (
+            <div className="brand-site">Support · {siteName}</div>
+          ) : admin ? (
             <div className="brand-site">Admin</div>
           ) : siteName ? (
             <div className="brand-site">{siteName}</div>
@@ -33,7 +42,7 @@ export function Header({ siteName, showSites = true, onSites, admin = false }: H
       </div>
       {showSites ? (
         <button type="button" className={admin ? 'sites-btn admin-chrome' : 'sites-btn'} onClick={onSites}>
-          {admin ? 'OUT' : 'SITES'}
+          {support ? 'ADMIN' : admin ? 'OUT' : 'SITES'}
         </button>
       ) : (
         <span />
