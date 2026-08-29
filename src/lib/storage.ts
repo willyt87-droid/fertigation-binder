@@ -22,18 +22,6 @@ export function clearConfig() {
   localStorage.removeItem(`${PREFIX}:anonKey`)
 }
 
-export function pinKey(siteId: string) {
-  return `${PREFIX}:pin:${siteId}`
-}
-
-export function loadPinHash(siteId: string): string | null {
-  return localStorage.getItem(pinKey(siteId))
-}
-
-export function savePinHash(siteId: string, hash: string) {
-  localStorage.setItem(pinKey(siteId), hash)
-}
-
 const SESSION_KEY = `${PREFIX}:sessionSiteId`
 
 export function loadSessionSiteId(): string | null {

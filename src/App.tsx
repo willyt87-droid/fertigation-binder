@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import {
-  createRoom,
   listCycles,
   listEntries,
   listRooms,
@@ -19,14 +18,18 @@ import {
   loadSessionSiteId,
   saveSessionSiteId,
 } from './lib/storage'
-import { AddRoomSheet } from './screens/AddRoomSheet'
 import { ConfigScreen } from './screens/ConfigScreen'
 import { EntryForm } from './screens/EntryForm'
+import { FacilitySettings } from './screens/FacilitySettings'
 import { GateScreen } from './screens/GateScreen'
+import { OnboardingWizard } from './screens/OnboardingWizard'
+import { OwnerAuthScreen } from './screens/OwnerAuthScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
 import { RoomScreen } from './screens/RoomScreen'
 import { StartCycleSheet } from './screens/StartCycleSheet'
 import type { Cycle, Entry, EntryDraft, Room, Site } from './types'
+
+type Screen = 'gate' | 'owner-auth' | 'wizard'
 
 export default function App() {
   const [config, setConfig] = useState(() => loadConfig())
@@ -34,6 +37,8 @@ export default function App() {
     () => (config ? makeClient(config.url, config.anonKey) : null),
     [config],
   )
+  const mockAuth = Boolean(config?.url.includes('127.0.0.1') || config?.url.includes('localhost'))
+  const [owner, setOwner] = useState<User | null>(null)
   const [sites, setSites] = useState<Site[]>([])
   const [sessionSite, setSessionSite] = useState<Site | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -42,9 +47,10 @@ export default function App() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [bootError, setBootError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [addingRoom, setAddingRoom] = useState(false)
+  const [screen, setScreen] = useState<Screen>('gate')
   const [startingCycle, setStartingCycle] = useState(false)
   const [entryEditor, setEntryEditor] = useState<Entry | 'new' | null>(null)
+  const [settingsSite, setSettingsSite] = useState<Site | null>(null)
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId)
   const selectedCycle = selectedRoom
@@ -59,32 +65,41 @@ export default function App() {
     return next
   }, [client])
 
-  const loadSiteData = useCallback(
-    async (site: Site, db: SupabaseClient) => {
-      const nextRooms = await listRooms(db, site.id)
-      const nextCycles = await listCycles(
-        db,
-        nextRooms.map((room) => room.id),
-      )
-      setRooms(nextRooms)
-      setCycles(nextCycles)
-      return { nextRooms, nextCycles }
-    },
-    [],
-  )
+  const loadSiteData = useCallback(async (site: Site, db: SupabaseClient) => {
+    const nextRooms = await listRooms(db, site.id)
+    const nextCycles = await listCycles(
+      db,
+      nextRooms.map((room) => room.id),
+    )
+    setRooms(nextRooms)
+    setCycles(nextCycles)
+    return { nextRooms, nextCycles }
+  }, [])
 
-  const loadRoomEntries = useCallback(
-    async (room: Room, roomCycles: Cycle[], db: SupabaseClient) => {
-      const cycle = roomCycles.find((c) => c.room_id === room.id && c.status === 'in_progress')
-      if (room.type === 'flower' && !cycle) {
-        setEntries([])
-        return
-      }
-      const since = room.type === 'flower' && cycle ? cycle.start_date : undefined
-      setEntries(await listEntries(db, room.id, since))
-    },
-    [],
-  )
+  const loadRoomEntries = useCallback(async (room: Room, roomCycles: Cycle[], db: SupabaseClient) => {
+    const cycle = roomCycles.find((c) => c.room_id === room.id && c.status === 'in_progress')
+    if (room.type === 'flower' && !cycle) {
+      setEntries([])
+      return
+    }
+    const since = room.type === 'flower' && cycle ? cycle.start_date : undefined
+    setEntries(await listEntries(db, room.id, since))
+  }, [])
+
+  useEffect(() => {
+    if (!client) return
+    let cancelled = false
+    client.auth.getSession().then(({ data }) => {
+      if (!cancelled) setOwner(data.session?.user ?? null)
+    })
+    const { data } = client.auth.onAuthStateChange((_event, session) => {
+      setOwner(session?.user ?? null)
+    })
+    return () => {
+      cancelled = true
+      data.subscription.unsubscribe()
+    }
+  }, [client])
 
   useEffect(() => {
     let cancelled = false
@@ -121,9 +136,10 @@ export default function App() {
     setEntries([])
     setRooms([])
     setCycles([])
-    setAddingRoom(false)
     setStartingCycle(false)
     setEntryEditor(null)
+    setSettingsSite(null)
+    setScreen('gate')
   }
 
   async function unlock(site: Site) {
@@ -134,20 +150,6 @@ export default function App() {
     await loadSiteData(site, client)
   }
 
-  async function handleAddRoom(input: { name: string; type: Room['type']; maxZones: number }) {
-    if (!client || !sessionSite) return
-    const sortOrder = rooms.reduce((max, room) => Math.max(max, room.sort_order), 0) + 1
-    await createRoom(client, {
-      siteId: sessionSite.id,
-      name: input.name,
-      type: input.type,
-      maxZones: input.maxZones,
-      sortOrder,
-    })
-    await loadSiteData(sessionSite, client)
-    setAddingRoom(false)
-  }
-
   async function handleStartCycle(startDate: string) {
     if (!client || !selectedRoom) return
     const cycle = await startCycle(client, { roomId: selectedRoom.id, startDate })
@@ -155,13 +157,14 @@ export default function App() {
       client,
       rooms.map((room) => room.id),
     )
-    setCycles(nextCycles.length > 0 ? nextCycles : [cycle])
+    const resolved = nextCycles.length > 0 ? nextCycles : [cycle]
+    setCycles(resolved)
     setStartingCycle(false)
-    await loadRoomEntries(selectedRoom, nextCycles.length > 0 ? nextCycles : [cycle], client)
+    await loadRoomEntries(selectedRoom, resolved, client)
   }
 
   async function handleSaveEntry(draft: EntryDraft, id?: string) {
-    if (!client || !selectedRoom) return
+    if (!client || !selectedRoom || !sessionSite) return
     if (selectedRoom.type === 'flower' && selectedCycle && draft.date < selectedCycle.start_date) {
       throw new Error(`Date must be on or after cycle start (${selectedCycle.start_date}).`)
     }
@@ -175,6 +178,7 @@ export default function App() {
     goSites()
     setConfig(null)
     setSites([])
+    setOwner(null)
     setBootError(null)
   }
 
@@ -203,6 +207,40 @@ export default function App() {
     )
   }
 
+  if (screen === 'owner-auth') {
+    return (
+      <div className="app-shell">
+        <Header onSites={goSites} />
+        <OwnerAuthScreen
+          client={client}
+          mockAuth={mockAuth}
+          mockOrigin={config.url}
+          onSignedIn={() => {
+            setScreen(sites.length === 0 ? 'wizard' : 'gate')
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (screen === 'wizard') {
+    return (
+      <div className="app-shell">
+        <Header onSites={goSites} />
+        <OnboardingWizard
+          client={client}
+          onCancel={() => setScreen('gate')}
+          onDone={async (site) => {
+            await refreshSites()
+            setScreen('gate')
+            setSettingsSite(null)
+            void site
+          }}
+        />
+      </div>
+    )
+  }
+
   if (!sessionSite) {
     return (
       <div className="app-shell">
@@ -220,13 +258,34 @@ export default function App() {
           <GateScreen
             client={client}
             sites={sites}
-            onRefreshSites={async () => {
-              await refreshSites()
-            }}
+            owner={Boolean(owner)}
             onUnlock={unlock}
+            onAddFacility={() => setScreen('wizard')}
+            onSettings={async (site) => {
+              setSettingsSite(site)
+              setRooms(await listRooms(client, site.id))
+            }}
+            onOwnerAuth={() => setScreen('owner-auth')}
+            onSignOut={() => {
+              void client.auth.signOut()
+              setOwner(null)
+            }}
             onChangeConnection={changeConnection}
           />
         )}
+        {settingsSite && owner ? (
+          <FacilitySettings
+            client={client}
+            site={settingsSite}
+            rooms={rooms.filter((room) => room.site_id === settingsSite.id)}
+            onClose={() => setSettingsSite(null)}
+            onChange={(site, nextRooms) => {
+              setSettingsSite(site)
+              setSites((current) => current.map((s) => (s.id === site.id ? site : s)))
+              setRooms(nextRooms)
+            }}
+          />
+        ) : null}
       </div>
     )
   }
@@ -239,6 +298,7 @@ export default function App() {
           room={selectedRoom}
           cycle={selectedCycle}
           entries={entries}
+          targets={sessionSite.targets}
           onStartCycle={() => setStartingCycle(true)}
           onAddEntry={() => setEntryEditor('new')}
           onEditEntry={(entry) => setEntryEditor(entry)}
@@ -251,7 +311,6 @@ export default function App() {
             setSelectedRoomId(room.id)
             await loadRoomEntries(room, cycles, client)
           }}
-          onAddRoom={() => setAddingRoom(true)}
         />
       )}
       <Footer
@@ -262,9 +321,6 @@ export default function App() {
           setStartingCycle(false)
         }}
       />
-      {addingRoom ? (
-        <AddRoomSheet onClose={() => setAddingRoom(false)} onCreate={handleAddRoom} />
-      ) : null}
       {startingCycle && selectedRoom ? (
         <StartCycleSheet
           roomName={selectedRoom.name}

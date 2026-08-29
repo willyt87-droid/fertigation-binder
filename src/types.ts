@@ -1,3 +1,5 @@
+import type { FacilityTargets } from './lib/targets'
+
 export type RoomType = 'flower' | 'mom' | 'veg'
 export type CycleStatus = 'in_progress' | 'completed'
 export type StageKey = 'early' | 'mid' | 'late'
@@ -6,6 +8,8 @@ export type Site = {
   id: string
   name: string
   location: string
+  targets: FacilityTargets
+  aroya_facility_id: string | null
 }
 
 export type Room = {
@@ -15,6 +19,7 @@ export type Room = {
   type: RoomType
   max_zones: number
   sort_order: number
+  aroya_room_id: string | null
 }
 
 export type Cycle = {

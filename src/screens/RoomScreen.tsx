@@ -1,6 +1,7 @@
 import type { Cycle, Entry, Room } from '../types'
-import { feedMlTone, stageForCycle, toneForBand, FEED_PH, RO_PH } from '../lib/bands'
+import { feedMlTone, stageForCycle, toneForTarget } from '../lib/bands'
 import { formatDate, formatEc, formatMl, formatPct, formatPh, formatRoPct } from '../lib/format'
+import { formatRange, rangeHasValues, type FacilityTargets } from '../lib/targets'
 import { chipInk, techColor } from '../lib/tech'
 import { ToneValue } from '../components/ToneValue'
 
@@ -8,6 +9,7 @@ type RoomScreenProps = {
   room: Room
   cycle: Cycle | undefined
   entries: Entry[]
+  targets: FacilityTargets
   onStartCycle: () => void
   onAddEntry: () => void
   onEditEntry: (entry: Entry) => void
@@ -17,6 +19,7 @@ export function RoomScreen({
   room,
   cycle,
   entries,
+  targets,
   onStartCycle,
   onAddEntry,
   onEditEntry,
@@ -40,6 +43,23 @@ export function RoomScreen({
           )}
         </div>
         {stage ? <span className={`chip ${stage.key}`}>{stage.label}</span> : null}
+      </div>
+      <div className="room-meta" style={{ marginBottom: 12 }}>
+        {rangeHasValues(targets.substrate.vwcPct) ? (
+          <span className="chip type">VWC {formatRange(targets.substrate.vwcPct, '%')}</span>
+        ) : null}
+        {rangeHasValues(targets.substrate.fieldCapacityPct) ? (
+          <span className="chip type">FC {formatRange(targets.substrate.fieldCapacityPct, '%')}</span>
+        ) : null}
+        {rangeHasValues(targets.substrate.drybackDayPct) ? (
+          <span className="chip type">Dryback {formatRange(targets.substrate.drybackDayPct, '%')}</span>
+        ) : null}
+        {rangeHasValues(targets.irrigation.shotSizeMl) ? (
+          <span className="chip type">Shot {formatRange(targets.irrigation.shotSizeMl, ' mL')}</span>
+        ) : null}
+        {rangeHasValues(targets.irrigation.shotEc) ? (
+          <span className="chip type">Shot EC {formatRange(targets.irrigation.shotEc)}</span>
+        ) : null}
       </div>
 
       {needsCycle ? (
@@ -89,21 +109,33 @@ export function RoomScreen({
                 <ToneValue
                   label="Feed mL"
                   value={formatMl(entry.feed_ml)}
-                  tone={feedMlTone(entry.feed_ml, stage?.key ?? null)}
+                  tone={feedMlTone(entry.feed_ml, stage?.key ?? null, targets)}
                 />
                 <ToneValue
                   label="Feed pH"
                   value={formatPh(entry.feed_ph)}
-                  tone={toneForBand(entry.feed_ph, FEED_PH.min, FEED_PH.max)}
+                  tone={toneForTarget(entry.feed_ph, targets.binder.feedPh)}
                 />
-                <ToneValue label="Feed EC" value={formatEc(entry.feed_ec)} />
-                <ToneValue label="RO %" value={formatPct(ro)} />
+                <ToneValue
+                  label="Feed EC"
+                  value={formatEc(entry.feed_ec)}
+                  tone={toneForTarget(entry.feed_ec, targets.binder.feedEc)}
+                />
+                <ToneValue
+                  label="RO %"
+                  value={formatPct(ro)}
+                  tone={toneForTarget(ro, targets.binder.roPct)}
+                />
                 <ToneValue
                   label="RO pH"
                   value={formatPh(entry.runoff_ph)}
-                  tone={toneForBand(entry.runoff_ph, RO_PH.min, RO_PH.max)}
+                  tone={toneForTarget(entry.runoff_ph, targets.binder.roPh)}
                 />
-                <ToneValue label="RO mL" value={formatMl(entry.runoff_ml)} />
+                <ToneValue
+                  label="RO mL"
+                  value={formatMl(entry.runoff_ml)}
+                  tone={toneForTarget(entry.runoff_ml, targets.binder.runoffMl)}
+                />
               </div>
             </button>
           )

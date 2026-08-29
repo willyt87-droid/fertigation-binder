@@ -1,14 +1,6 @@
 import type { BandTone, Stage, StageKey } from '../types'
+import type { FacilityTargets, MinMax } from './targets'
 import { todayISO } from './format'
-
-export const FEED_PH = { min: 5.8, max: 6.2 }
-export const RO_PH = { min: 5.3, max: 6.3 }
-
-export const FEED_ML: Record<StageKey, { min: number; max: number }> = {
-  early: { min: 1800, max: 2880 },
-  mid: { min: 2100, max: 4680 },
-  late: { min: 2100, max: 3800 },
-}
 
 export function cycleDay(startDate: string, onDate = todayISO()) {
   const start = Date.parse(`${startDate}T00:00:00`)
@@ -28,15 +20,19 @@ export function stageForCycle(startDate: string, onDate = todayISO()) {
   return stageForDay(cycleDay(startDate, onDate))
 }
 
-export function toneForBand(value: number | null, min: number, max: number): BandTone {
+export function toneForTarget(value: number | null, range: MinMax): BandTone {
   if (value === null) return 'none'
-  if (value < min) return 'low'
-  if (value > max) return 'high'
+  if (range.min == null && range.max == null) return 'none'
+  if (range.min != null && value < range.min) return 'low'
+  if (range.max != null && value > range.max) return 'high'
   return 'ok'
 }
 
-export function feedMlTone(value: number | null, stage: StageKey | null): BandTone {
+export function feedMlTone(
+  value: number | null,
+  stage: StageKey | null,
+  targets: FacilityTargets,
+): BandTone {
   if (!stage) return 'none'
-  const band = FEED_ML[stage]
-  return toneForBand(value, band.min, band.max)
+  return toneForTarget(value, targets.binder.feedMl[stage])
 }

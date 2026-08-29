@@ -5,10 +5,9 @@ type OverviewScreenProps = {
   rooms: Room[]
   cycles: Cycle[]
   onOpenRoom: (room: Room) => void
-  onAddRoom: () => void
 }
 
-export function OverviewScreen({ rooms, cycles, onOpenRoom, onAddRoom }: OverviewScreenProps) {
+export function OverviewScreen({ rooms, cycles, onOpenRoom }: OverviewScreenProps) {
   const flower = rooms.filter((r) => r.type === 'flower')
   const momVeg = rooms.filter((r) => r.type === 'mom' || r.type === 'veg')
 
@@ -28,9 +27,6 @@ export function OverviewScreen({ rooms, cycles, onOpenRoom, onAddRoom }: Overvie
         cycles={cycles}
         onOpenRoom={onOpenRoom}
       />
-      <button type="button" className="add-room" onClick={onAddRoom}>
-        + Add room
-      </button>
     </div>
   )
 }
