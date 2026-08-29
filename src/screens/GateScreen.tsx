@@ -86,7 +86,19 @@ export function GateScreen({
               setUnlocking(site)
             }}>
               <h3>{site.name}</h3>
-              <p>{site.location || 'No location'} · tap to unlock floor</p>
+              <p>
+                {site.location || 'No location'}
+                {site.status === 'active'
+                  ? ' · tap to unlock floor'
+                  : site.status === 'paused'
+                    ? ' · paused — floor PIN locked'
+                    : ' · pending approval — floor PIN locked'}
+              </p>
+              {site.status !== 'active' ? (
+                <span className={`chip status-${site.status}`} style={{ marginTop: 8 }}>
+                  {site.status}
+                </span>
+              ) : null}
             </button>
             {owner && onSettings ? (
               <button type="button" className="btn btn-ghost" onClick={() => onSettings(site)}>
@@ -146,14 +158,23 @@ export function GateScreen({
             setError(null)
           }}
         >
-          <p className="lede">Enter the floor PIN. Logging only — no facility settings on this path.</p>
-          <PinPad
-            value={unlockPin}
-            onChange={(next) => {
-              setUnlockPin(next)
-              void tryUnlock(unlocking, next)
-            }}
-          />
+          {unlocking.status !== 'active' ? (
+            <p className="lede">
+              Floor unlock works only after a platform admin sets this facility to active. Owners can
+              still finish setup in Settings.
+            </p>
+          ) : (
+            <>
+              <p className="lede">Enter the floor PIN. Logging only — no facility settings on this path.</p>
+              <PinPad
+                value={unlockPin}
+                onChange={(next) => {
+                  setUnlockPin(next)
+                  void tryUnlock(unlocking, next)
+                }}
+              />
+            </>
+          )}
           {error ? (
             <div className="error" style={{ marginTop: 12 }}>
               {error}

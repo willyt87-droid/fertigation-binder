@@ -54,6 +54,7 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
         location,
         targets,
         aroya_facility_id: aroyaFacilityId.trim() || null,
+        aroya_key_saved: Boolean(aroyaKey.trim()),
       }
       if (isPinShape(pin) && pin === confirm) {
         patch.pin_hash = await hashPin(pin)

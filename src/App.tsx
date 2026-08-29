@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
+import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
 import {
   listCycles,
   listEntries,
@@ -18,6 +19,7 @@ import {
   loadSessionSiteId,
   saveSessionSiteId,
 } from './lib/storage'
+import { AdminDashboard } from './screens/AdminDashboard'
 import { ConfigScreen } from './screens/ConfigScreen'
 import { EntryForm } from './screens/EntryForm'
 import { FacilitySettings } from './screens/FacilitySettings'
@@ -39,6 +41,8 @@ export default function App() {
   )
   const mockAuth = Boolean(config?.url.includes('127.0.0.1') || config?.url.includes('localhost'))
   const [owner, setOwner] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminPath, setAdminPath] = useState(() => isAdminPath())
   const [sites, setSites] = useState<Site[]>([])
   const [sessionSite, setSessionSite] = useState<Site | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -86,20 +90,39 @@ export default function App() {
     setEntries(await listEntries(db, room.id, since))
   }, [])
 
+  const applyUser = useCallback(async (user: User | null, db: SupabaseClient) => {
+    setOwner(user)
+    const admin = user ? await isPlatformAdmin(db, user) : false
+    setIsAdmin(admin)
+    if (admin) {
+      goPath('/admin')
+      setAdminPath(true)
+      setScreen('gate')
+      setSessionSite(null)
+    }
+    return admin
+  }, [])
+
+  useEffect(() => {
+    const onPop = () => setAdminPath(isAdminPath())
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
   useEffect(() => {
     if (!client) return
     let cancelled = false
     client.auth.getSession().then(({ data }) => {
-      if (!cancelled) setOwner(data.session?.user ?? null)
+      if (!cancelled) void applyUser(data.session?.user ?? null, client)
     })
     const { data } = client.auth.onAuthStateChange((_event, session) => {
-      setOwner(session?.user ?? null)
+      if (!cancelled) void applyUser(session?.user ?? null, client)
     })
     return () => {
       cancelled = true
       data.subscription.unsubscribe()
     }
-  }, [client])
+  }, [applyUser, client])
 
   useEffect(() => {
     let cancelled = false
@@ -109,11 +132,18 @@ export default function App() {
         return
       }
       try {
+        const { data } = await client.auth.getSession()
+        const admin = await applyUser(data.session?.user ?? null, client)
+        if (cancelled) return
+        if (admin) {
+          setReady(true)
+          return
+        }
         const nextSites = await refreshSites(client)
         if (cancelled) return
         const sessionId = loadSessionSiteId()
         const restored = nextSites.find((site) => site.id === sessionId)
-        if (restored) {
+        if (restored && restored.status === 'active') {
           setSessionSite(restored)
           await loadSiteData(restored, client)
         }
@@ -127,7 +157,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [client, loadSiteData, refreshSites])
+  }, [applyUser, client, loadSiteData, refreshSites])
 
   function goSites() {
     clearSession()
@@ -140,10 +170,18 @@ export default function App() {
     setEntryEditor(null)
     setSettingsSite(null)
     setScreen('gate')
+    if (isAdmin) {
+      goPath('/admin')
+      setAdminPath(true)
+    } else {
+      goPath('/')
+      setAdminPath(false)
+    }
   }
 
   async function unlock(site: Site) {
     if (!client) return
+    if (site.status !== 'active') return
     saveSessionSiteId(site.id)
     setSessionSite(site)
     setSelectedRoomId(null)
@@ -179,7 +217,28 @@ export default function App() {
     setConfig(null)
     setSites([])
     setOwner(null)
+    setIsAdmin(false)
     setBootError(null)
+  }
+
+  async function finishOwnerSignIn() {
+    if (!client) return
+    const { data } = await client.auth.getSession()
+    const admin = await applyUser(data.session?.user ?? null, client)
+    if (admin) return
+    const next = await refreshSites()
+    setScreen(next.length === 0 ? 'wizard' : 'gate')
+    goPath('/')
+    setAdminPath(false)
+  }
+
+  async function signOut() {
+    if (!client) return
+    await client.auth.signOut()
+    setOwner(null)
+    setIsAdmin(false)
+    setScreen('gate')
+    goPath(adminPath ? '/admin' : '/')
   }
 
   if (!ready) {
@@ -207,6 +266,56 @@ export default function App() {
     )
   }
 
+  if (isAdmin) {
+    return (
+      <div className="app-shell admin-shell">
+        <Header admin onSites={() => void signOut()} />
+        <AdminDashboard client={client} adminEmail={owner?.email ?? ''} onSignOut={() => void signOut()} />
+      </div>
+    )
+  }
+
+  if (adminPath) {
+    if (!owner) {
+      return (
+        <div className="app-shell admin-shell">
+          <Header admin showSites={false} />
+          <OwnerAuthScreen
+            client={client}
+            mockAuth={mockAuth}
+            mockOrigin={config.url}
+            mode="admin"
+            onSignedIn={() => void finishOwnerSignIn()}
+          />
+        </div>
+      )
+    }
+    return (
+      <div className="app-shell admin-shell">
+        <Header admin onSites={() => { goPath('/'); setAdminPath(false) }} />
+        <div className="app-main plain">
+          <p className="kicker">Platform admin</p>
+          <h1 style={{ marginBottom: 8, fontSize: 24 }}>Not an operator</h1>
+          <p className="lede">
+            {owner.email} is signed in as a facility owner, not a platform admin. Owner setup stays
+            on the home screen.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              goPath('/')
+              setAdminPath(false)
+              setScreen('gate')
+            }}
+          >
+            Back to owner setup
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'owner-auth') {
     return (
       <div className="app-shell">
@@ -215,9 +324,7 @@ export default function App() {
           client={client}
           mockAuth={mockAuth}
           mockOrigin={config.url}
-          onSignedIn={() => {
-            setScreen(sites.length === 0 ? 'wizard' : 'gate')
-          }}
+          onSignedIn={() => void finishOwnerSignIn()}
         />
       </div>
     )
@@ -266,10 +373,7 @@ export default function App() {
               setRooms(await listRooms(client, site.id))
             }}
             onOwnerAuth={() => setScreen('owner-auth')}
-            onSignOut={() => {
-              void client.auth.signOut()
-              setOwner(null)
-            }}
+            onSignOut={() => void signOut()}
             onChangeConnection={changeConnection}
           />
         )}

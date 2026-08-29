@@ -14,6 +14,13 @@ export function formatDate(iso: string) {
   return `${m}/${d}`
 }
 
+export function formatTimestamp(iso: string | null | undefined) {
+  if (!iso) return '—'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toLocaleString()
+}
+
 export function parseNumber(value: string): number | null {
   const trimmed = value.trim()
   if (!trimmed) return null
