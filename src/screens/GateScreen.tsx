@@ -14,7 +14,6 @@ type GateScreenProps = {
   onUnlock: (site: Site) => void
   onAddFacility?: () => void
   onSettings?: (site: Site) => void
-  onOwnerSignup?: () => void
   onOwnerAuth?: () => void
   onSignOut?: () => void
 }
@@ -26,7 +25,6 @@ export function GateScreen({
   onUnlock,
   onAddFacility,
   onSettings,
-  onOwnerSignup,
   onOwnerAuth,
   onSignOut,
 }: GateScreenProps) {
@@ -62,27 +60,16 @@ export function GateScreen({
       <p className="kicker">Site gate</p>
       <h1 style={{ marginBottom: 8, fontSize: 26 }}>Choose a grow</h1>
       <p className="lede">
-        New facility owners start here. Floor techs unlock a card below with the facility PIN.
-        Session stays until you tap SITES.
+        Floor techs: tap an approved grow, then enter the PIN. Owner sign-in is a second path — not
+        on this pad. Session stays until you tap SITES.
       </p>
-
-      {!owner && onOwnerSignup ? (
-        <div className="stack" style={{ marginBottom: 18 }}>
-          <button type="button" className="btn btn-primary" onClick={onOwnerSignup}>
-            Start owner signup
-          </button>
-          <p className="quiet" style={{ margin: 0 }}>
-            Owner signup is the path for a new facility. Floor unlock stays on the cards.
-          </p>
-        </div>
-      ) : null}
 
       <div className="stack" style={{ marginBottom: 16 }}>
         {sites.length === 0 ? (
           <div className="empty-slot">
             {owner
               ? 'No facilities yet. Add one to start collections.'
-              : 'No floor cards yet. Start owner signup to add a facility.'}
+              : 'No approved grows on this tablet yet.'}
           </div>
         ) : null}
         {sites.map((site) => {

@@ -215,12 +215,6 @@ export default function App() {
     clearAppHash()
   }
 
-  function openOwnerSignup() {
-    setAuthIntent('signup')
-    setScreen('owner-auth')
-    window.history.replaceState({}, '', '/app#signup')
-  }
-
   function openOwnerSignIn() {
     setAuthIntent('signin')
     setScreen('owner-auth')
@@ -448,7 +442,6 @@ export default function App() {
               setSettingsSite(site)
               setRooms(await listRooms(client, site.id))
             }}
-            onOwnerSignup={openOwnerSignup}
             onOwnerAuth={openOwnerSignIn}
             onSignOut={() => void signOut()}
           />
