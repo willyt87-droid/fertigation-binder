@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { LegalLinks } from '../components/LegalLinks'
 import { PinPad } from '../components/PinPad'
 import { Sheet } from '../components/Sheet'
 import { checkFloorPin } from '../lib/api'
@@ -134,6 +135,7 @@ export function GateScreen({
           Change connection
         </button>
       </p>
+      <LegalLinks />
 
       {joinOpen ? (
         <Sheet title="Join the Binder" onClose={() => setJoinOpen(false)}>

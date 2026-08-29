@@ -51,7 +51,9 @@ export default function App() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [bootError, setBootError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [screen, setScreen] = useState<Screen>('gate')
+  const [screen, setScreen] = useState<Screen>(() =>
+    window.location.hash === '#signup' ? 'owner-auth' : 'gate',
+  )
   const [startingCycle, setStartingCycle] = useState(false)
   const [entryEditor, setEntryEditor] = useState<Entry | 'new' | null>(null)
   const [settingsSite, setSettingsSite] = useState<Site | null>(null)
@@ -107,6 +109,14 @@ export default function App() {
     const onPop = () => setAdminPath(isAdminPath())
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === '#signup') setScreen('owner-auth')
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   useEffect(() => {
@@ -174,7 +184,7 @@ export default function App() {
       goPath('/admin')
       setAdminPath(true)
     } else {
-      goPath('/')
+      goPath('/app')
       setAdminPath(false)
     }
   }
@@ -228,7 +238,7 @@ export default function App() {
     if (admin) return
     const next = await refreshSites()
     setScreen(next.length === 0 ? 'wizard' : 'gate')
-    goPath('/')
+    goPath('/app')
     setAdminPath(false)
   }
 
@@ -238,7 +248,7 @@ export default function App() {
     setOwner(null)
     setIsAdmin(false)
     setScreen('gate')
-    goPath(adminPath ? '/admin' : '/')
+    goPath(adminPath ? '/admin' : '/app')
   }
 
   if (!ready) {
@@ -292,7 +302,7 @@ export default function App() {
     }
     return (
       <div className="app-shell admin-shell">
-        <Header admin onSites={() => { goPath('/'); setAdminPath(false) }} />
+        <Header admin onSites={() => { goPath('/app'); setAdminPath(false) }} />
         <div className="app-main plain">
           <p className="kicker">Platform admin</p>
           <h1 style={{ marginBottom: 8, fontSize: 24 }}>Not an operator</h1>
@@ -304,7 +314,7 @@ export default function App() {
             type="button"
             className="btn btn-primary"
             onClick={() => {
-              goPath('/')
+              goPath('/app')
               setAdminPath(false)
               setScreen('gate')
             }}

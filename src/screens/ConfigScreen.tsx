@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { makeClient, testConnection } from '../lib/api'
 import { saveConfig } from '../lib/storage'
 import { Droplet } from '../components/Droplet'
+import { LegalLinks } from '../components/LegalLinks'
 
 type ConfigScreenProps = {
   onReady: () => void
@@ -78,6 +79,7 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
           {busy ? 'Checking…' : 'Save and continue'}
         </button>
       </div>
+      <LegalLinks />
     </div>
   )
 }

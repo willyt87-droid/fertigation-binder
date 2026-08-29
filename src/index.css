@@ -661,6 +661,11 @@ select:focus {
   padding: 0;
   font-size: 13px;
   font-weight: 700;
+  text-decoration: none;
+}
+
+a.linkish:hover {
+  text-decoration: underline;
 }
 
 .config-hero,
@@ -798,4 +803,19 @@ select:focus {
   .admin-meta {
     grid-template-columns: 1fr;
   }
+}
+
+.legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.legal-links .linkish.current {
+  color: var(--ink);
 }
