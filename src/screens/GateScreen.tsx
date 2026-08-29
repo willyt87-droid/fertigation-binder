@@ -14,9 +14,9 @@ type GateScreenProps = {
   onUnlock: (site: Site) => void
   onAddFacility?: () => void
   onSettings?: (site: Site) => void
+  onOwnerSignup?: () => void
   onOwnerAuth?: () => void
   onSignOut?: () => void
-  onChangeConnection: () => void
 }
 
 export function GateScreen({
@@ -26,15 +26,19 @@ export function GateScreen({
   onUnlock,
   onAddFacility,
   onSettings,
+  onOwnerSignup,
   onOwnerAuth,
   onSignOut,
-  onChangeConnection,
 }: GateScreenProps) {
   const [error, setError] = useState<string | null>(null)
-  const [joinOpen, setJoinOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
   const [unlocking, setUnlocking] = useState<Site | null>(null)
   const [unlockPin, setUnlockPin] = useState('')
+
+  function closeUnlock() {
+    setUnlocking(null)
+    setUnlockPin('')
+    setError(null)
+  }
 
   async function tryUnlock(site: Site, value: string) {
     if (!isPinShape(value)) return
@@ -52,40 +56,46 @@ export function GateScreen({
     }
   }
 
-  async function copyJoin() {
-    const text = 'Email to join the binder and start collections.'
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      /* no mailto */
-    }
-    setCopied(true)
-  }
-
   return (
     <div className="app-main">
       <p className="kicker">Site gate</p>
       <h1 style={{ marginBottom: 8, fontSize: 26 }}>Choose a grow</h1>
       <p className="lede">
-        Floor techs unlock with the facility PIN. Owners sign in to add facilities, rooms, and
-        targets. Session stays until you tap SITES.
+        New facility owners start here. Floor techs unlock a card below with the facility PIN.
+        Session stays until you tap SITES.
       </p>
+
+      {!owner && onOwnerSignup ? (
+        <div className="stack" style={{ marginBottom: 18 }}>
+          <button type="button" className="btn btn-primary" onClick={onOwnerSignup}>
+            Start owner signup
+          </button>
+          <p className="quiet" style={{ margin: 0 }}>
+            Owner signup is the path for a new facility. Floor unlock stays on the cards.
+          </p>
+        </div>
+      ) : null}
 
       <div className="stack" style={{ marginBottom: 16 }}>
         {sites.length === 0 ? (
           <div className="empty-slot">
             {owner
               ? 'No facilities yet. Add one to start collections.'
-              : 'No facilities yet. Owner sign-in is required to set up this binder.'}
+              : 'No floor cards yet. Start owner signup to add a facility.'}
           </div>
         ) : null}
         {sites.map((site) => (
           <div key={site.id} className="site-card" style={{ display: 'grid', gap: 10 }}>
-            <button type="button" className="site-card" style={{ padding: 0, border: 0, boxShadow: 'none' }} onClick={() => {
-              setError(null)
-              setUnlockPin('')
-              setUnlocking(site)
-            }}>
+            <button
+              type="button"
+              className="site-card"
+              style={{ padding: 0, border: 0, boxShadow: 'none' }}
+              onClick={() => {
+                setError(null)
+                setUnlockPin('')
+                setUnlocking(site)
+              }}
+            >
               <h3>{site.name}</h3>
               <p>
                 {site.location || 'No location'}
@@ -117,10 +127,6 @@ export function GateScreen({
       ) : null}
 
       <p style={{ marginTop: 18, textAlign: 'center' }}>
-        <button type="button" className="linkish" onClick={() => setJoinOpen(true)}>
-          Join the Binder
-        </button>
-        <span className="quiet"> · </span>
         {owner ? (
           <button type="button" className="linkish" onClick={onSignOut}>
             Owner sign out
@@ -130,36 +136,11 @@ export function GateScreen({
             Owner sign-in
           </button>
         )}
-        <span className="quiet"> · </span>
-        <button type="button" className="linkish" onClick={onChangeConnection}>
-          Change connection
-        </button>
       </p>
       <LegalLinks />
 
-      {joinOpen ? (
-        <Sheet title="Join the Binder" onClose={() => setJoinOpen(false)}>
-          <p className="lede">Email to join the binder and start collections.</p>
-          <button type="button" className="btn btn-primary" onClick={copyJoin}>
-            Email the Fertigation Binder
-          </button>
-          {copied ? (
-            <p className="ok-note" style={{ marginTop: 12 }}>
-              Copy saved. There is no mailto link in this app.
-            </p>
-          ) : null}
-        </Sheet>
-      ) : null}
-
       {unlocking ? (
-        <Sheet
-          title={`Unlock · ${unlocking.name}`}
-          onClose={() => {
-            setUnlocking(null)
-            setUnlockPin('')
-            setError(null)
-          }}
-        >
+        <Sheet title={`Unlock · ${unlocking.name}`} onClose={closeUnlock}>
           {unlocking.status !== 'active' ? (
             <p className="lede">
               Floor unlock works only after a platform admin sets this facility to active. Owners can
@@ -182,6 +163,9 @@ export function GateScreen({
               {error}
             </div>
           ) : null}
+          <button type="button" className="btn btn-ghost" style={{ marginTop: 14 }} onClick={closeUnlock}>
+            Cancel
+          </button>
         </Sheet>
       ) : null}
     </div>

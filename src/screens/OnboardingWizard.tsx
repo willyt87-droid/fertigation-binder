@@ -4,6 +4,7 @@ import { PinPad } from '../components/PinPad'
 import { RangeRow } from '../components/RangeRow'
 import { createRoom, createSite } from '../lib/api'
 import { hashPin, isPinShape } from '../lib/pin'
+import { ownerSetupKicker, PENDING_FLOOR_NOTE, remainingSetupSteps } from '../lib/ownerSetup'
 import { DEFAULT_TARGETS, type FacilityTargets } from '../lib/targets'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -82,10 +83,14 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
 
   return (
     <div className="app-main">
-      <p className="kicker">Owner setup · {step + 1} / 4</p>
+      <p className="kicker">{ownerSetupKicker((step + 1) as 2 | 3 | 4)}</p>
       <h1 style={{ marginBottom: 8, fontSize: 24 }}>
         {step === 1 ? 'Facility' : step === 2 ? 'Rooms' : 'Targets'}
       </h1>
+      <p className="lede">
+        {remainingSetupSteps((step + 1) as 2 | 3 | 4)}
+        {step === 1 ? ` Facility includes name, location, and the floor PIN. ${PENDING_FLOOR_NOTE}` : ''}
+      </p>
       {step === 1 ? (
         <div className="form-card stack">
           <label className="field">
