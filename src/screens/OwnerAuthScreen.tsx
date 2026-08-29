@@ -33,7 +33,7 @@ export function OwnerAuthScreen({
     try {
       const { error: otpError } = await client.auth.signInWithOtp({
         email: email.trim(),
-        options: { emailRedirectTo: `${window.location.origin}${admin ? '/admin' : '/'}` },
+        options: { emailRedirectTo: `${window.location.origin}${admin ? '/admin' : '/app'}` },
       })
       if (otpError) throw otpError
       setSent(true)

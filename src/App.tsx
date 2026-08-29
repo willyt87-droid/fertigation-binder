@@ -3,7 +3,6 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
-import { publicPageFromPath } from './lib/pages'
 import {
   listCycles,
   listEntries,
@@ -28,11 +27,8 @@ import { GateScreen } from './screens/GateScreen'
 import { OnboardingWizard } from './screens/OnboardingWizard'
 import { OwnerAuthScreen } from './screens/OwnerAuthScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
-import { PricingPage } from './screens/PricingPage'
-import { PrivacyPage } from './screens/PrivacyPage'
 import { RoomScreen } from './screens/RoomScreen'
 import { StartCycleSheet } from './screens/StartCycleSheet'
-import { TermsPage } from './screens/TermsPage'
 import type { Cycle, Entry, EntryDraft, Room, Site } from './types'
 
 type Screen = 'gate' | 'owner-auth' | 'wizard'
@@ -47,7 +43,6 @@ export default function App() {
   const [owner, setOwner] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminPath, setAdminPath] = useState(() => isAdminPath())
-  const [publicPage, setPublicPage] = useState(() => publicPageFromPath())
   const [sites, setSites] = useState<Site[]>([])
   const [sessionSite, setSessionSite] = useState<Site | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -56,7 +51,9 @@ export default function App() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [bootError, setBootError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [screen, setScreen] = useState<Screen>('gate')
+  const [screen, setScreen] = useState<Screen>(() =>
+    window.location.hash === '#signup' ? 'owner-auth' : 'gate',
+  )
   const [startingCycle, setStartingCycle] = useState(false)
   const [entryEditor, setEntryEditor] = useState<Entry | 'new' | null>(null)
   const [settingsSite, setSettingsSite] = useState<Site | null>(null)
@@ -109,12 +106,17 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const onPop = () => {
-      setAdminPath(isAdminPath())
-      setPublicPage(publicPageFromPath())
-    }
+    const onPop = () => setAdminPath(isAdminPath())
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === '#signup') setScreen('owner-auth')
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   useEffect(() => {
@@ -182,21 +184,9 @@ export default function App() {
       goPath('/admin')
       setAdminPath(true)
     } else {
-      goPath('/')
+      goPath('/app')
       setAdminPath(false)
     }
-    setPublicPage(null)
-  }
-
-  function startOwnerSignup() {
-    goPath('/')
-    setAdminPath(false)
-    setPublicPage(null)
-    if (owner && !isAdmin) {
-      setScreen(sites.length === 0 ? 'wizard' : 'gate')
-      return
-    }
-    setScreen('owner-auth')
   }
 
   async function unlock(site: Site) {
@@ -248,7 +238,7 @@ export default function App() {
     if (admin) return
     const next = await refreshSites()
     setScreen(next.length === 0 ? 'wizard' : 'gate')
-    goPath('/')
+    goPath('/app')
     setAdminPath(false)
   }
 
@@ -258,18 +248,7 @@ export default function App() {
     setOwner(null)
     setIsAdmin(false)
     setScreen('gate')
-    goPath(adminPath ? '/admin' : '/')
-  }
-
-  if (publicPage) {
-    return (
-      <div className="app-shell">
-        <Header onSites={goSites} />
-        {publicPage === 'privacy' ? <PrivacyPage /> : null}
-        {publicPage === 'terms' ? <TermsPage /> : null}
-        {publicPage === 'pricing' ? <PricingPage onStartSignup={startOwnerSignup} /> : null}
-      </div>
-    )
+    goPath(adminPath ? '/admin' : '/app')
   }
 
   if (!ready) {
@@ -323,7 +302,7 @@ export default function App() {
     }
     return (
       <div className="app-shell admin-shell">
-        <Header admin onSites={() => { goPath('/'); setAdminPath(false) }} />
+        <Header admin onSites={() => { goPath('/app'); setAdminPath(false) }} />
         <div className="app-main plain">
           <p className="kicker">Platform admin</p>
           <h1 style={{ marginBottom: 8, fontSize: 24 }}>Not an operator</h1>
@@ -335,7 +314,7 @@ export default function App() {
             type="button"
             className="btn btn-primary"
             onClick={() => {
-              goPath('/')
+              goPath('/app')
               setAdminPath(false)
               setScreen('gate')
             }}

@@ -32,7 +32,7 @@ Floor techs do **not** need accounts.
 3. Email a magic link from the operator sign-in screen. The first allowlisted address is **`willyt87@gmail.com`** (seeded in `platform_admins`). Extra operators: `INSERT` their email into `public.platform_admins` and/or set `VITE_PLATFORM_ADMIN_EMAILS` (comma-separated) so the client also routes them to `/admin`.
 4. After the link, WT sees the newcomers queue (empty until an owner creates a facility). Approve / pause / remove from here. Opening a facility is read-only (rooms, last activity, whether an AROYA key is saved — never the key).
 
-If WT uses the home-screen **Owner sign-in** with an allowlisted email, the app skips onboarding and redirects to `/admin`.
+If WT uses **Owner sign-in** on `/app` with an allowlisted email, the app skips onboarding and redirects to `/admin`.
 
 ### How an owner signs up
 
@@ -76,7 +76,7 @@ Then paste `http://127.0.0.1:8787` and any anon key such as `local`. Use **Conti
    - [`supabase/migrations/20260829180000_platform_admin.sql`](supabase/migrations/20260829180000_platform_admin.sql)
 3. Authentication → Providers: Email enabled (magic link).
 4. Project Settings → API: copy the project URL and the **anon public** key (never the service_role key).
-5. Open the app, paste URL + anon key, save. Admins go to `/admin`. Owners sign in, then create a facility.
+5. Open **`/app`**, paste URL + anon key, save. Admins go to `/admin`. Owners sign in, then create a facility.
 
 If you use the CLI against this new project:
 
@@ -124,13 +124,14 @@ Swagger: https://api.aroya.io/public_api/swagger/
 
 ## Public product pages
 
-These routes are part of the PWA (Netlify SPA fallback) and do not touch the Ravena pilot database:
+Indexable HTML (not the app shell). `robots.txt` and `sitemap.xml` list only these four URLs:
 
-- `/privacy` — what the binder stores (fertigation logs, facility/room config, optional local AROYA key, magic-link email). Operator: The Fertigation Binder. Contact: willyt87@gmail.com. Grower data is not sold.
-- `/terms` — owner / floor / operator rules, per-facility subscription, no App Store binary.
-- `/pricing` — one plan at **$49/facility/month** (v1 list price), 14-day trial, floor PIN included, AROYA later. The CTA starts existing owner signup; there is no Stripe checkout in this release.
+- `/` — marketing home. Title is **The Fertigation Binder | Log feed and runoff by room**. H1 is “The tablet on the greenhouse floor.” Shows the $49/facility/month price and a trial CTA.
+- `/pricing` — one plan at **$49/facility/month** (v1 list price), 14-day owner trial, floor PIN included, no seats. CTA starts owner signup at `/app#signup`. No Stripe in this release.
+- `/privacy` — what the binder stores (fertigation logs, facility/room config, optional local keys, magic-link email). Grower data is not sold.
+- `/terms` — owner / floor / operator rules and the per-facility subscription.
 
-The site gate and first-run connect screen link to all three. `/admin` is unchanged (platform operator only).
+The binder app (connect, gate, owner wizard, floor tablet) lives at **`/app`**. First-run “Connect this binder” is not the public home. `/admin` is unchanged (platform operator only). Gate and connect screens still link Privacy, Terms, and Pricing.
 
 ## Stack
 

@@ -661,6 +661,11 @@ select:focus {
   padding: 0;
   font-size: 13px;
   font-weight: 700;
+  text-decoration: none;
+}
+
+a.linkish:hover {
+  text-decoration: underline;
 }
 
 .config-hero,
@@ -800,54 +805,6 @@ select:focus {
   }
 }
 
-.legal-page h1 {
-  margin-bottom: 8px;
-  font-size: 26px;
-}
-
-.legal-page a {
-  color: var(--cyan);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.legal-page a:hover {
-  text-decoration: underline;
-}
-
-.legal-section {
-  margin: 0 0 18px;
-}
-
-.legal-section h2 {
-  margin-bottom: 8px;
-  color: var(--cyan);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.legal-section p,
-.legal-section li {
-  color: var(--ink);
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.legal-section p {
-  margin: 0 0 10px;
-}
-
-.legal-section ul {
-  margin: 0 0 10px;
-  padding-left: 1.15em;
-}
-
-.legal-section li + li {
-  margin-top: 8px;
-}
-
 .legal-links {
   display: flex;
   flex-wrap: wrap;
@@ -861,52 +818,4 @@ select:focus {
 
 .legal-links .linkish.current {
   color: var(--ink);
-}
-
-.price-card {
-  padding: 20px 16px;
-  margin-bottom: 18px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line-strong);
-  background: linear-gradient(180deg, rgba(16, 38, 28, 0.95), rgba(7, 20, 15, 0.98));
-  box-shadow: inset 4px 0 0 var(--cyan), 0 0 28px rgba(34, 211, 238, 0.12), var(--shadow);
-  display: grid;
-  gap: 12px;
-}
-
-.price-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.price-amount {
-  font-family: var(--mono);
-  font-size: 48px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--cyan);
-  text-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
-}
-
-.price-period {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.price-features {
-  margin: 0;
-  padding-left: 1.15em;
-}
-
-.price-features li {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.price-features li + li {
-  margin-top: 8px;
 }

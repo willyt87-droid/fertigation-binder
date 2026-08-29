@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="https://fertigation-binder-app.netlify.app/privacy" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07140f" />
+    <meta
+      name="description"
+      content="Privacy policy for The Fertigation Binder. Fertigation logs, facility config, magic-link email, and optional keys stored on the device. We do not sell grower data."
+    />
+    <title>Privacy | The Fertigation Binder</title>
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="top">
+        <a class="brand" href="/">
+          <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="drop" x1="18" y1="8" x2="50" y2="58" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22d3ee" />
+                <stop offset="1" stop-color="#0284c7" />
+              </linearGradient>
+            </defs>
+            <path fill="url(#drop)" d="M32 6c0 0-16 20.5-16 32.5a16 16 0 1 0 32 0C48 26.5 32 6 32 6z" />
+          </svg>
+          The Fertigation Binder
+        </a>
+        <a class="open-app" href="/app">Open binder</a>
+      </header>
+      <main class="main">
+        <p class="kicker">The Fertigation Binder</p>
+        <h1>Privacy policy</h1>
+        <p class="lede">
+          How this fertigation binder app handles information. We do not sell grower data. The
+          product is a progressive web app hosted on Netlify.
+        </p>
+
+        <h2>Who operates this product</h2>
+        <p>
+          The Fertigation Binder is logging software operated as a platform. Owners subscribe per
+          facility. Floor techs do not create accounts. Privacy questions go through the owner or
+          operator sign-in in the app — not a public inbox on this page.
+        </p>
+
+        <h2>What we collect</h2>
+        <ul>
+          <li>
+            <strong>Fertigation logs</strong> — collection date, zone, cultivar, feed and runoff
+            mL / pH / EC, tech initials, and notes entered on the floor tablet.
+          </li>
+          <li>
+            <strong>Facility and room config</strong> — facility name and location, rooms, flower
+            cycles, floor PIN hash, and target bands an owner sets.
+          </li>
+          <li>
+            <strong>Owner and operator email</strong> — used only to send a magic-link sign-in.
+            Floor unlock uses a 4-digit PIN, not an email account.
+          </li>
+          <li>
+            <strong>Optional integration keys</strong> — if an owner pastes a third-party key in
+            facility settings, it stays in that browser’s local storage. v1 does not send it out.
+          </li>
+          <li>
+            <strong>Connection settings</strong> — the project URL and anon key pasted on first
+            run stay in local storage on that device.
+          </li>
+        </ul>
+
+        <h2>Where it lives</h2>
+        <p>
+          Binder data lives in the empty project the owner connects. Magic-link delivery uses that
+          project’s email auth. The PWA is served from Netlify (static files and ordinary CDN
+          request logs). The floor PIN is stored as a SHA-256 hash, not in plaintext.
+        </p>
+
+        <h2>What we do not do</h2>
+        <ul>
+          <li>We do not sell grower data, fertigation logs, or facility lists.</li>
+          <li>We do not use grower logs for advertising or third-party marketing.</li>
+          <li>This product is the Netlify-hosted PWA. There is no App Store binary.</li>
+        </ul>
+
+        <h2>Who can see a facility</h2>
+        <p>
+          Owners see the facilities they create. Floor techs with the PIN can log on an active
+          facility. The platform operator can review pending facilities for approval and pause or
+          remove a grow. The operator does not impersonate the owner on the floor path.
+        </p>
+
+        <h2>Retention and requests</h2>
+        <p>
+          Logs stay in the connected project until an owner or the operator removes the facility.
+          Ask for a copy or deletion from the signed-in owner or operator account in the app.
+        </p>
+        <p class="quiet">Last updated 29 August 2026.</p>
+
+        <nav class="foot" aria-label="Legal">
+          <a class="current" href="/privacy" aria-current="page">Privacy</a>
+          <span>·</span>
+          <a href="/terms">Terms</a>
+          <span>·</span>
+          <a href="/pricing">Pricing</a>
+        </nav>
+      </main>
+    </div>
+  </body>
+</html>

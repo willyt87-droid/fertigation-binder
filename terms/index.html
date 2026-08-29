@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href="https://fertigation-binder-app.netlify.app/terms" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07140f" />
+    <meta
+      name="description"
+      content="Terms of use for The Fertigation Binder logging software. Per-facility subscription, floor PIN, and owner magic-link access."
+    />
+    <title>Terms | The Fertigation Binder</title>
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="top">
+        <a class="brand" href="/">
+          <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="drop" x1="18" y1="8" x2="50" y2="58" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22d3ee" />
+                <stop offset="1" stop-color="#0284c7" />
+              </linearGradient>
+            </defs>
+            <path fill="url(#drop)" d="M32 6c0 0-16 20.5-16 32.5a16 16 0 1 0 32 0C48 26.5 32 6 32 6z" />
+          </svg>
+          The Fertigation Binder
+        </a>
+        <a class="open-app" href="/app">Open binder</a>
+      </header>
+      <main class="main">
+        <p class="kicker">The Fertigation Binder</p>
+        <h1>Terms of use</h1>
+        <p class="lede">
+          These terms cover the Fertigation Binder progressive web app — logging software for
+          feed and runoff by room. Owners subscribe per facility.
+        </p>
+
+        <h2>The product</h2>
+        <p>
+          The Fertigation Binder is a greenhouse-floor tablet PWA hosted on Netlify. Floor techs
+          unlock a facility with a PIN and record collections. There is no App Store binary.
+        </p>
+        <p>
+          v1 includes owner onboarding, facility cards, floor PIN logging, flower cycles, and
+          feed/runoff collections. Extra modules are not part of this release.
+        </p>
+
+        <h2>Accounts and access</h2>
+        <ul>
+          <li>
+            <strong>Platform operator</strong> — signs in at /admin. Approves, pauses, or removes
+            facilities. Does not run owner onboarding.
+          </li>
+          <li>
+            <strong>Owners</strong> — sign in with a magic-link email, create facilities, set
+            rooms, target bands, and the floor PIN.
+          </li>
+          <li>
+            <strong>Floor</strong> — no account. Unlock works only while the facility is active.
+            Keep the PIN on the grow.
+          </li>
+        </ul>
+        <p>
+          You are responsible for who you give the PIN to and for the accuracy of logs entered
+          under that PIN.
+        </p>
+
+        <h2>Subscription</h2>
+        <p>
+          Billing is per facility, monthly, after a 14-day owner trial. The v1 list price is on
+          <a href="/pricing">Pricing</a> ($49/facility/month). Checkout is not collected inside
+          this PWA yet — starting a trial uses owner sign-up. The operator may change the
+          published rate later. No seats.
+        </p>
+
+        <h2>Your data</h2>
+        <p>
+          Fertigation logs and facility/room config belong to the grow that created them. Optional
+          integration keys stay in the browser. We do not sell grower data. Connect a new empty
+          project for this product; do not point the app at another operation’s live database.
+        </p>
+
+        <h2>Acceptable use</h2>
+        <p>
+          Use the binder for your own facilities. Do not attempt to access another grow’s project
+          or the operator dashboard without an allowlisted email.
+        </p>
+
+        <h2>No agronomic warranty</h2>
+        <p>
+          The binder records collections and compares them to bands you configure. It is not
+          agronomic advice and does not guarantee crop outcome. Target chips are tools, not a
+          prescription.
+        </p>
+        <p>
+          The software is provided as-is. To the extent allowed by law, The Fertigation Binder and
+          its operator are not liable for lost crop, lost profits, or data loss beyond the fees
+          paid for the affected facilities in the prior three months.
+        </p>
+
+        <h2>Changes</h2>
+        <p>
+          We may update these terms as the product grows. Continued use after a posted change
+          means you accept the new terms. Questions go through the signed-in owner or operator
+          account in the app.
+        </p>
+        <p class="quiet">Last updated 29 August 2026.</p>
+
+        <nav class="foot" aria-label="Legal">
+          <a href="/privacy">Privacy</a>
+          <span>·</span>
+          <a class="current" href="/terms" aria-current="page">Terms</a>
+          <span>·</span>
+          <a href="/pricing">Pricing</a>
+        </nav>
+      </main>
+    </div>
+  </body>
+</html>
