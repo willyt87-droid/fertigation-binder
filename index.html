@@ -8,14 +8,14 @@
     <meta name="theme-color" content="#0284c7" />
     <meta
       name="description"
-      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Free through December 31, 2026."
+      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Binder is live and free through December 31, 2026."
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="The Fertigation Binder" />
     <meta property="og:title" content="The Fertigation Binder | Log feed and runoff by room" />
     <meta
       property="og:description"
-      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Free through December 31, 2026."
+      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Binder is live and free through December 31, 2026."
     />
     <meta property="og:url" content="https://fertigation-binder-app.netlify.app/" />
     <meta property="og:image" content="https://fertigation-binder-app.netlify.app/og.png" />
@@ -23,7 +23,7 @@
     <meta name="twitter:title" content="The Fertigation Binder | Log feed and runoff by room" />
     <meta
       name="twitter:description"
-      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Free through December 31, 2026."
+      content="Tablet fertigation logging for greenhouses. Feed and runoff by room. Floor PIN for techs. Binder is live and free through December 31, 2026."
     />
     <meta name="twitter:image" content="https://fertigation-binder-app.netlify.app/og.png" />
     <title>The Fertigation Binder | Log feed and runoff by room</title>
@@ -31,13 +31,35 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Offer",
-        "name": "The Fertigation Binder",
-        "description": "Logging software. Free through December 31, 2026 for every facility.",
-        "price": 0,
-        "priceCurrency": "USD",
-        "validThrough": "2026-12-31",
-        "url": "https://fertigation-binder-app.netlify.app/"
+        "@graph": [
+          {
+            "@type": "Offer",
+            "name": "Binder",
+            "description": "Logging software. Live. Free through December 31, 2026 for every facility.",
+            "price": 0,
+            "priceCurrency": "USD",
+            "validThrough": "2026-12-31",
+            "url": "https://fertigation-binder-app.netlify.app/"
+          },
+          {
+            "@type": "Offer",
+            "name": "Floor",
+            "description": "Coming. Not for sale today. Planned Binder plus IPM and Service rounds.",
+            "price": 149,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/PreOrder",
+            "url": "https://fertigation-binder-app.netlify.app/pricing"
+          },
+          {
+            "@type": "Offer",
+            "name": "Link",
+            "description": "Coming. Not for sale today. Planned live API integrations — not shipping now.",
+            "price": 249,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/PreOrder",
+            "url": "https://fertigation-binder-app.netlify.app/pricing"
+          }
+        ]
       }
     </script>
   </head>
@@ -63,23 +85,49 @@
         <h1>The tablet on the greenhouse floor</h1>
         <p class="lede">
           The Fertigation Binder is logging software for feed and runoff by room. Floor techs unlock
-          with a PIN. Every facility is free through December 31, 2026.
+          with a PIN. Software is per facility, no seats. Binder is what is live.
         </p>
 
         <article class="price-card">
-          <p class="kicker">Every facility</p>
+          <p class="kicker">Binder · live</p>
           <div class="price-row">
             <span class="price-amount">Free</span>
             <span class="price-period">through December 31, 2026</span>
           </div>
           <p>
-            After that date: $49/facility/month. Floor PIN included. No seats. Paid billing in 2027
-            includes a 14-day owner trial — nothing to pay now, and no card form.
+            Every facility. After that date: $49/facility/month. Floor PIN included. No seats. When
+            paid billing starts in 2027, new facilities include a 14-day owner trial. Nothing to
+            pay now, and no card form.
           </p>
           <p>
             <a class="cta" href="/app#signup">Start owner signup</a>
           </p>
         </article>
+
+        <h2>Software vs coaching</h2>
+        <div class="tier-strip" aria-label="Product ladder">
+          <article class="tier live">
+            <span class="badge live">Live</span>
+            <h3>Binder</h3>
+            <p>Feed and runoff, rooms, PIN, targets. Free through Dec 31, 2026, then $49/mo.</p>
+          </article>
+          <article class="tier">
+            <span class="badge coming">Coming</span>
+            <h3>Floor</h3>
+            <p>$149/mo. Planned IPM and Service rounds. Not in the app today.</p>
+          </article>
+          <article class="tier">
+            <span class="badge coming">Coming</span>
+            <h3>Link</h3>
+            <p>$249/mo. Planned live APIs. No live pull in this release.</p>
+          </article>
+          <article class="tier">
+            <span class="badge coming">Quote</span>
+            <h3>House</h3>
+            <p>Custom UI plus coaching retainer. Software included. Not a SaaS toggle.</p>
+          </article>
+        </div>
+        <p class="quiet"><a href="/pricing">See the full ladder on Pricing</a></p>
 
         <section class="feature">
           <h2>Fertigation log</h2>

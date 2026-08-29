@@ -126,8 +126,8 @@ Swagger: https://api.aroya.io/public_api/swagger/
 
 Indexable HTML (not the app shell). `robots.txt` and `sitemap.xml` list only these four URLs:
 
-- `/` — marketing home. Title is **The Fertigation Binder | Log feed and runoff by room**. H1 is “The tablet on the greenhouse floor.” Free through December 31, 2026; after that $49/facility/month. CTA starts owner signup at `/app#signup`.
-- `/pricing` — free through December 31, 2026 for every facility. After that **$49/facility/month**, floor PIN included, no seats. CTA starts owner signup at `/app#signup`. No Stripe in this release.
+- `/` — marketing home. Title is **The Fertigation Binder | Log feed and runoff by room**. H1 is “The tablet on the greenhouse floor.” Binder promo (free through December 31, 2026) plus a short Binder / Floor / Link / House strip. CTA starts owner signup at `/app#signup`.
+- `/pricing` — product ladder. Binder is live and free through December 31, 2026, then **$49/facility/month**. Floor $149 and Link $249 are coming. House is a custom quote. No Stripe.
 - `/privacy` — what the binder stores (fertigation logs, facility/room config, optional local keys, magic-link email). Grower data is not sold.
 - `/terms` — owner / floor / operator rules and the per-facility subscription.
 

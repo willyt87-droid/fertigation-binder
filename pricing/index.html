@@ -8,14 +8,14 @@
     <meta name="theme-color" content="#0284c7" />
     <meta
       name="description"
-      content="The Fertigation Binder is logging software. Free through December 31, 2026 for every facility. After that, $49 per facility / month. Floor PIN included. No seats."
+      content="Logging software per facility, no seats. Binder is live and free through December 31, 2026. Floor, Link, and House are coming."
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="The Fertigation Binder" />
     <meta property="og:title" content="Pricing | The Fertigation Binder" />
     <meta
       property="og:description"
-      content="The Fertigation Binder is logging software. Free through December 31, 2026 for every facility. After that, $49 per facility / month. Floor PIN included. No seats."
+      content="Logging software per facility, no seats. Binder is live and free through December 31, 2026. Floor, Link, and House are coming."
     />
     <meta property="og:url" content="https://fertigation-binder-app.netlify.app/pricing" />
     <meta property="og:image" content="https://fertigation-binder-app.netlify.app/og.png" />
@@ -23,7 +23,7 @@
     <meta name="twitter:title" content="Pricing | The Fertigation Binder" />
     <meta
       name="twitter:description"
-      content="The Fertigation Binder is logging software. Free through December 31, 2026 for every facility. After that, $49 per facility / month. Floor PIN included. No seats."
+      content="Logging software per facility, no seats. Binder is live and free through December 31, 2026. Floor, Link, and House are coming."
     />
     <meta name="twitter:image" content="https://fertigation-binder-app.netlify.app/og.png" />
     <title>Pricing | The Fertigation Binder</title>
@@ -31,13 +31,35 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Offer",
-        "name": "The Fertigation Binder",
-        "description": "Logging software. Free through December 31, 2026 for every facility.",
-        "price": 0,
-        "priceCurrency": "USD",
-        "validThrough": "2026-12-31",
-        "url": "https://fertigation-binder-app.netlify.app/pricing"
+        "@graph": [
+          {
+            "@type": "Offer",
+            "name": "Binder",
+            "description": "Logging software. Live. Free through December 31, 2026 for every facility.",
+            "price": 0,
+            "priceCurrency": "USD",
+            "validThrough": "2026-12-31",
+            "url": "https://fertigation-binder-app.netlify.app/pricing"
+          },
+          {
+            "@type": "Offer",
+            "name": "Floor",
+            "description": "Coming. Not for sale today. Planned Binder plus IPM and Service rounds.",
+            "price": 149,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/PreOrder",
+            "url": "https://fertigation-binder-app.netlify.app/pricing"
+          },
+          {
+            "@type": "Offer",
+            "name": "Link",
+            "description": "Coming. Not for sale today. Planned live API integrations — not shipping now.",
+            "price": 249,
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/PreOrder",
+            "url": "https://fertigation-binder-app.netlify.app/pricing"
+          }
+        ]
       }
     </script>
   </head>
@@ -59,41 +81,75 @@
         <a class="open-app" href="/app#signup">Start free</a>
       </header>
       <main class="main">
-        <p class="kicker">Fertigation binder app</p>
-        <h1>Free through December 31, 2026</h1>
+        <p class="kicker">Per facility · no seats</p>
+        <h1>Binder, Floor, Link, House</h1>
         <p class="lede">
-          The Fertigation Binder is logging software. Owners run one binder per facility — not per
-          room, not per tech. The button starts owner signup. There is no card form.
+          Logging software is priced per facility. Coaching is a separate retainer, not a cheap
+          SaaS toggle. Only Binder is live. There is no card form.
         </p>
 
         <article class="price-card">
-          <p class="kicker">Every facility</p>
+          <p class="kicker">Binder promo</p>
           <div class="price-row">
             <span class="price-amount">Free</span>
             <span class="price-period">through December 31, 2026</span>
           </div>
           <p>
-            The Fertigation Binder is free through December 31, 2026 for every facility. After that
+            The Binder product is free through December 31, 2026 for every facility. After that
             date: $49/facility/month. Floor PIN included. No seats.
           </p>
-          <ul>
-            <li>Free for every facility through December 31, 2026</li>
-            <li>After that date: $49/facility/month</li>
-            <li>Floor PIN included. No seats</li>
-            <li>Owner magic-link setup and room collections</li>
-            <li>When paid billing starts in 2027, new facilities include a 14-day owner trial</li>
-          </ul>
+        </article>
+
+        <article class="price-card">
+          <span class="badge live">Live now</span>
+          <h3>Binder</h3>
+          <p>
+            Feed and runoff collections, rooms, PIN, and targets. After the promo: $49/facility/month.
+            When paid billing starts in 2027, new facilities include a 14-day owner trial.
+          </p>
           <p>
             <a class="cta" href="/app#signup">Start owner signup</a>
           </p>
-          <p class="quiet">Opens the binder app. No card form in this release.</p>
+          <p class="quiet">Opens the binder app. No card form.</p>
+        </article>
+
+        <article class="price-card coming">
+          <span class="badge coming">Coming</span>
+          <h3>Floor · $149/facility/month</h3>
+          <p>
+            Planned: Binder plus IPM (scout, pest/disease, sprays) and Service (equipment,
+            calibration, cleaning) on the same tablet. Those rounds are not in the app today.
+            There is no Floor signup.
+          </p>
+        </article>
+
+        <article class="price-card coming">
+          <span class="badge coming">Coming</span>
+          <h3>Link · $249/facility/month</h3>
+          <p>
+            Planned: Floor plus live API integrations for sensor and irrigation platforms. The v1
+            API path is a stub only. This release does not pull live data.
+          </p>
+        </article>
+
+        <article class="price-card coming">
+          <span class="badge coming">Custom quote</span>
+          <h3>House</h3>
+          <p>
+            Custom UI plus in-house coaching. Software is included. Coaching is a retainer, not a
+            monthly toggle. Talk through the existing owner path — there is no public inbox on
+            this page.
+          </p>
+          <p>
+            <a class="cta" href="/app#signup">Talk to the operator</a>
+          </p>
         </article>
 
         <h2>How billing works</h2>
         <p>
-          One binder covers one facility: rooms, PIN, and logs for that grow. Add another facility
-          when you add another site. New facilities start pending until the operator approves floor
-          unlock. Nothing is charged through December 31, 2026.
+          One software subscription covers one facility. Add another facility when you add another
+          site. New Binder facilities start pending until the operator approves floor unlock.
+          Nothing is charged through December 31, 2026.
         </p>
 
         <nav class="foot" aria-label="Legal">

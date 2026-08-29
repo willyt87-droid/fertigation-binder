@@ -245,3 +245,72 @@ h2 {
   color: var(--muted);
   font-size: 13px;
 }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge.live {
+  background: rgba(34, 197, 115, 0.16);
+  color: #22c573;
+}
+
+.badge.coming {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--muted);
+}
+
+.tier-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.tier {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.tier.live {
+  border-color: var(--line-strong);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+
+.tier h3 {
+  margin: 8px 0 4px;
+  font-size: 16px;
+}
+
+.tier p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.price-card.coming {
+  box-shadow: var(--shadow);
+  border-color: var(--line);
+  opacity: 0.92;
+}
+
+.price-card h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+@media (max-width: 420px) {
+  .tier-strip {
+    grid-template-columns: 1fr;
+  }
+}
