@@ -385,6 +385,8 @@ h2 {
 }
 
 .ask-form .cta {
+  width: 100%;
+  min-height: 48px;
   border: 0;
   cursor: pointer;
 }

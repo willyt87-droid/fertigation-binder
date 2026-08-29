@@ -94,9 +94,12 @@ function mapRoom(row: Record<string, unknown>): Room {
 
 export async function listSites(client: SupabaseClient): Promise<Site[]> {
   const { data: sessionData } = await client.auth.getSession()
+  // Anon is granted only id,name,location,targets,aroya_facility_id. Selecting
+  // status (or any other column) returns permission denied for table sites.
+  // RLS already hides non-active rows from anon; mapSite treats missing status as active.
   const query = sessionData.session
     ? client.from('sites').select(SITE_OWNER_COLUMNS)
-    : client.from('sites').select('id,name,location,targets,aroya_facility_id,status')
+    : client.from('sites').select('id,name,location,targets,aroya_facility_id')
   const { data, error } = await query.order('name')
   return requireData(data, error).map((row) => mapSite(row as Record<string, unknown>))
 }

@@ -12,6 +12,10 @@ export function cannotReceiveMagicLink(email: string) {
   return UNDELIVERABLE_TLDS.some((tld) => lower.endsWith(tld))
 }
 
+export function binderLoadErrorCopy(_err: unknown): string {
+  return 'Could not load the grow list. Try again.'
+}
+
 export function ownerAuthErrorCopy(err: unknown): string {
   const { lower, code } = authErrorBits(err)
   if (

@@ -59,7 +59,17 @@
           The Fertigation Binder is logging software operated as a platform. Owners subscribe per
           facility on this product. Floor techs do not create accounts.
         </p>
-        <div id="ask-root" data-reason="question"></div>
+          <form class="ask-form" data-reason="question" novalidate>
+            <p class="kicker">Ask a question</p>
+            <p class="quiet">No sign-in required. This lands on the operator queue.</p>
+            <label class="ask-field"><span>Name</span><input name="name" autocomplete="name" required /></label>
+            <label class="ask-field"><span>Facility</span><input name="facility" autocomplete="organization" /></label>
+            <label class="ask-field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <input type="hidden" name="reason" value="question" />
+            <label class="ask-field"><span>Message</span><textarea name="message" required></textarea></label>
+            <p class="ask-status quiet" hidden></p>
+            <button type="submit" class="cta">Ask a question</button>
+          </form>
 
         <h2>What we collect</h2>
         <ul>

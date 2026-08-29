@@ -138,7 +138,17 @@
             Custom UI plus in-house coaching. Software is included. Coaching is a retainer, not a
             monthly toggle. House is a quote — not a live module and not owner signup.
           </p>
-          <div id="ask-root" data-reason="house_quote"></div>
+          <form class="ask-form" data-reason="house_quote" novalidate>
+            <p class="kicker">Request a House quote</p>
+            <p class="quiet">No sign-in required. This lands on the operator queue.</p>
+            <label class="ask-field"><span>Name</span><input name="name" autocomplete="name" required /></label>
+            <label class="ask-field"><span>Facility</span><input name="facility" autocomplete="organization" /></label>
+            <label class="ask-field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <input type="hidden" name="reason" value="house_quote" />
+            <label class="ask-field"><span>Message</span><textarea name="message" required></textarea></label>
+            <p class="ask-status quiet" hidden></p>
+            <button type="submit" class="cta">Request a House quote</button>
+          </form>
         </article>
 
         <h2>How billing works</h2>
