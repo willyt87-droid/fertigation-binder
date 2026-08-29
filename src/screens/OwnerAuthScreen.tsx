@@ -63,6 +63,7 @@ export function OwnerAuthScreen({ client, mockAuth, mockOrigin, onSignedIn }: Ow
 
   return (
     <div className="app-main plain">
+      <p className="kicker">Owner setup · 1 / 4</p>
       <div className="config-hero">
         <Droplet size={42} />
         <h1>Owner sign-in</h1>

@@ -82,7 +82,7 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
 
   return (
     <div className="app-main">
-      <p className="kicker">Owner setup · {step} / 3</p>
+      <p className="kicker">Owner setup · {step + 1} / 4</p>
       <h1 style={{ marginBottom: 8, fontSize: 24 }}>
         {step === 1 ? 'Facility' : step === 2 ? 'Rooms' : 'Targets'}
       </h1>
@@ -164,8 +164,9 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
       {step === 3 ? (
         <div className="stack">
           <p className="lede">
-            Starting points only — edit for this facility. Overview and room pages read these
-            numbers, never a hardcoded grow.
+            Typical starting points, not a rule. Binder logging, substrate, and irrigation live on
+            this facility. Climate is in Facility settings later. Overview and room pages read these
+            numbers — never a hardcoded grow.
           </p>
           <div className="form-card stack">
             <p className="kicker">Binder logging</p>
@@ -260,7 +261,7 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
             />
             <RangeRow
               label="Dryback day %"
-              hint="Typical 15–25"
+              hint="Typical 15–25 overall; veg smaller, gen larger"
               value={targets.substrate.drybackDayPct}
               onChange={(drybackDayPct) =>
                 setTargets({ ...targets, substrate: { ...targets.substrate, drybackDayPct } })
@@ -268,6 +269,7 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
             />
             <RangeRow
               label="Dryback overnight %"
+              hint="Typical 15–25"
               value={targets.substrate.drybackOvernightPct}
               onChange={(drybackOvernightPct) =>
                 setTargets({
@@ -277,7 +279,7 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
               }
             />
             <RangeRow
-              label="Substrate EC"
+              label="Substrate EC / ECpw"
               value={targets.substrate.substrateEc}
               onChange={(substrateEc) =>
                 setTargets({ ...targets, substrate: { ...targets.substrate, substrateEc } })
@@ -301,14 +303,14 @@ export function OnboardingWizard({ client, onDone, onCancel }: OnboardingWizardP
               }
             />
             <RangeRow
-              label="Shot size % media"
+              label="Shot size % media volume"
               value={targets.irrigation.shotSizePctMedia}
               onChange={(shotSizePctMedia) =>
                 setTargets({ ...targets, irrigation: { ...targets.irrigation, shotSizePctMedia } })
               }
             />
             <RangeRow
-              label="Shot EC"
+              label="Shot EC (dripper)"
               value={targets.irrigation.shotEc}
               onChange={(shotEc) =>
                 setTargets({ ...targets, irrigation: { ...targets.irrigation, shotEc } })

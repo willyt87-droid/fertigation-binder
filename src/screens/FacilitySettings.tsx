@@ -13,7 +13,7 @@ import {
 } from '../lib/api'
 import { loadAroyaKey, saveAroyaKey, aroyaStatus } from '../lib/aroyaSettings'
 import { hashPin, isPinShape } from '../lib/pin'
-import { formatRange, rangeHasValues, type FacilityTargets } from '../lib/targets'
+import { type FacilityTargets } from '../lib/targets'
 
 type FacilitySettingsProps = {
   client: SupabaseClient
@@ -285,6 +285,7 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
         />
         <RangeRow
           label="Dryback day %"
+          hint="Typical 15–25 overall; veg smaller, gen larger"
           value={targets.substrate.drybackDayPct}
           onChange={(drybackDayPct) =>
             setTargets({ ...targets, substrate: { ...targets.substrate, drybackDayPct } })
@@ -292,13 +293,14 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
         />
         <RangeRow
           label="Dryback overnight %"
+          hint="Typical 15–25"
           value={targets.substrate.drybackOvernightPct}
           onChange={(drybackOvernightPct) =>
             setTargets({ ...targets, substrate: { ...targets.substrate, drybackOvernightPct } })
           }
         />
         <RangeRow
-          label="Substrate EC"
+          label="Substrate EC / ECpw"
           value={targets.substrate.substrateEc}
           onChange={(substrateEc) =>
             setTargets({ ...targets, substrate: { ...targets.substrate, substrateEc } })
@@ -321,14 +323,14 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
           }
         />
         <RangeRow
-          label="Shot size % media"
+          label="Shot size % media volume"
           value={targets.irrigation.shotSizePctMedia}
           onChange={(shotSizePctMedia) =>
             setTargets({ ...targets, irrigation: { ...targets.irrigation, shotSizePctMedia } })
           }
         />
         <RangeRow
-          label="Shot EC"
+          label="Shot EC (dripper)"
           value={targets.irrigation.shotEc}
           onChange={(shotEc) =>
             setTargets({ ...targets, irrigation: { ...targets.irrigation, shotEc } })
@@ -403,9 +405,6 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
         <div className={status === 'key_saved' ? 'ok-note' : 'quiet'}>
           {status === 'key_saved' ? 'Key saved (not pulling yet)' : 'Not connected'}
         </div>
-        {rangeHasValues(targets.substrate.fieldCapacityPct) ? (
-          <div className="quiet">FC chip preview: {formatRange(targets.substrate.fieldCapacityPct, '%')}</div>
-        ) : null}
 
         {error ? <div className="error">{error}</div> : null}
         <div className="btn-row">

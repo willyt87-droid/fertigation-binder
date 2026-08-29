@@ -43,7 +43,7 @@ export type FacilityTargets = {
 
 const mm = (min: number | null, max: number | null): MinMax => ({ min, max })
 
-/** Starting points for a new facility — typical binder figures, not a branded grow. */
+/** Starting points for a new facility — typical figures, not a rule. */
 export const DEFAULT_TARGETS: FacilityTargets = {
   binder: {
     feedPh: mm(5.8, 6.2),
