@@ -122,6 +122,16 @@ Read-only endpoints we will use later (listed in unused `src/lib/aroyaClient.ts`
 
 Swagger: https://api.aroya.io/public_api/swagger/
 
+## Public product pages
+
+These routes are part of the PWA (Netlify SPA fallback) and do not touch the Ravena pilot database:
+
+- `/privacy` — what the binder stores (fertigation logs, facility/room config, optional local AROYA key, magic-link email). Operator: The Fertigation Binder. Contact: willyt87@gmail.com. Grower data is not sold.
+- `/terms` — owner / floor / operator rules, per-facility subscription, no App Store binary.
+- `/pricing` — one plan at **$49/facility/month** (v1 list price), 14-day trial, floor PIN included, AROYA later. The CTA starts existing owner signup; there is no Stripe checkout in this release.
+
+The site gate and first-run connect screen link to all three. `/admin` is unchanged (platform operator only).
+
 ## Stack
 
 Vite + React + TypeScript, vanilla CSS, `@supabase/supabase-js`, PWA (manifest + service worker). Deployable on Netlify as an SPA.

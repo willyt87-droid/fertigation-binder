@@ -3,6 +3,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
+import { publicPageFromPath } from './lib/pages'
 import {
   listCycles,
   listEntries,
@@ -27,8 +28,11 @@ import { GateScreen } from './screens/GateScreen'
 import { OnboardingWizard } from './screens/OnboardingWizard'
 import { OwnerAuthScreen } from './screens/OwnerAuthScreen'
 import { OverviewScreen } from './screens/OverviewScreen'
+import { PricingPage } from './screens/PricingPage'
+import { PrivacyPage } from './screens/PrivacyPage'
 import { RoomScreen } from './screens/RoomScreen'
 import { StartCycleSheet } from './screens/StartCycleSheet'
+import { TermsPage } from './screens/TermsPage'
 import type { Cycle, Entry, EntryDraft, Room, Site } from './types'
 
 type Screen = 'gate' | 'owner-auth' | 'wizard'
@@ -43,6 +47,7 @@ export default function App() {
   const [owner, setOwner] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminPath, setAdminPath] = useState(() => isAdminPath())
+  const [publicPage, setPublicPage] = useState(() => publicPageFromPath())
   const [sites, setSites] = useState<Site[]>([])
   const [sessionSite, setSessionSite] = useState<Site | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -104,7 +109,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const onPop = () => setAdminPath(isAdminPath())
+    const onPop = () => {
+      setAdminPath(isAdminPath())
+      setPublicPage(publicPageFromPath())
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
@@ -177,6 +185,18 @@ export default function App() {
       goPath('/')
       setAdminPath(false)
     }
+    setPublicPage(null)
+  }
+
+  function startOwnerSignup() {
+    goPath('/')
+    setAdminPath(false)
+    setPublicPage(null)
+    if (owner && !isAdmin) {
+      setScreen(sites.length === 0 ? 'wizard' : 'gate')
+      return
+    }
+    setScreen('owner-auth')
   }
 
   async function unlock(site: Site) {
@@ -239,6 +259,17 @@ export default function App() {
     setIsAdmin(false)
     setScreen('gate')
     goPath(adminPath ? '/admin' : '/')
+  }
+
+  if (publicPage) {
+    return (
+      <div className="app-shell">
+        <Header onSites={goSites} />
+        {publicPage === 'privacy' ? <PrivacyPage /> : null}
+        {publicPage === 'terms' ? <TermsPage /> : null}
+        {publicPage === 'pricing' ? <PricingPage onStartSignup={startOwnerSignup} /> : null}
+      </div>
+    )
   }
 
   if (!ready) {
