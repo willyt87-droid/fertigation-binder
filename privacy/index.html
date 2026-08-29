@@ -57,9 +57,19 @@
         <h2>Who operates this product</h2>
         <p>
           The Fertigation Binder is logging software operated as a platform. Owners subscribe per
-          facility. Floor techs do not create accounts. Privacy questions go through the owner or
-          operator sign-in in the app — not a public inbox on this page.
+          facility on this product. Floor techs do not create accounts.
         </p>
+          <form class="ask-form" data-reason="question" novalidate>
+            <p class="kicker">Ask a question</p>
+            <p class="quiet">No sign-in required. This lands on the operator queue.</p>
+            <label class="ask-field"><span>Name</span><input name="name" autocomplete="name" required /></label>
+            <label class="ask-field"><span>Facility</span><input name="facility" autocomplete="organization" /></label>
+            <label class="ask-field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <input type="hidden" name="reason" value="question" />
+            <label class="ask-field"><span>Message</span><textarea name="message" required></textarea></label>
+            <p class="ask-status quiet" hidden></p>
+            <button type="submit" class="cta">Ask a question</button>
+          </form>
 
         <h2>What we collect</h2>
         <ul>
@@ -80,16 +90,17 @@
             facility settings, it stays in that browser’s local storage. v1 does not send it out.
           </li>
           <li>
-            <strong>Connection settings</strong> — the project URL and anon key pasted on first
-            run stay in local storage on that device.
+            <strong>Public asks</strong> — name, facility, email, and message if you use Ask a
+            question or Request a House quote on these pages.
           </li>
         </ul>
 
         <h2>Where it lives</h2>
         <p>
-          Binder data lives in the empty project the owner connects. Magic-link delivery uses that
-          project’s email auth. The PWA is served from Netlify (static files and ordinary CDN
-          request logs). The floor PIN is stored as a SHA-256 hash, not in plaintext.
+          Fertigation logs, facility config, and public asks live in the product database. Owner
+          sign-in is an email magic link. Floor unlock is a 4-digit PIN on an approved facility.
+          The PWA is served from Netlify (static files and ordinary CDN request logs). The floor
+          PIN is stored as a SHA-256 hash, not in plaintext.
         </p>
 
         <h2>What we do not do</h2>
@@ -108,11 +119,13 @@
 
         <h2>Retention and requests</h2>
         <p>
-          Logs stay in the connected project until an owner or the operator removes the facility.
-          Ask for a copy or deletion from the signed-in owner or operator account in the app.
+          Logs stay in the product database until an owner or the operator removes the facility.
+          Use Ask a question above for a copy or deletion request — no sign-in required.
         </p>
         <p class="quiet">Last updated 29 August 2026.</p>
 
+        <script src="/platform.js"></script>
+        <script src="/ask.js"></script>
         <nav class="foot" aria-label="Legal">
           <a class="current" href="/privacy" aria-current="page">Privacy</a>
           <span>·</span>

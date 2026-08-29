@@ -18,6 +18,8 @@ const admins = new Set([SEEDED_ADMIN, ...extraAdmins])
 const sites = new Map()
 /** @type {Map<string, object>} */
 const rooms = new Map()
+/** @type {object[]} */
+const contactRequests = []
 
 function json(res, status, body, extra = {}) {
   const payload = JSON.stringify(body)
@@ -104,7 +106,7 @@ function sitePublic(site, authed) {
     targets: site.targets,
     aroya_facility_id: site.aroya_facility_id,
   }
-  if (!authed) return base
+  if (!authed) return { ...base, status: site.status }
   return {
     ...base,
     status: site.status,
@@ -229,6 +231,29 @@ const server = http.createServer(async (req, res) => {
     const email = eqParam(url, 'email')?.toLowerCase()
     const rows = email && isAdmin(email) && auth?.email === email ? [{ email }] : []
     json(res, 200, rows)
+    return
+  }
+
+  if (path === '/rest/v1/contact_requests') {
+    if (req.method === 'POST') {
+      const body = await readBody(req)
+      contactRequests.unshift({
+        id: randomUUID(),
+        created_at: new Date().toISOString(),
+        name: String(body.name || '').trim(),
+        facility: String(body.facility || ''),
+        email: String(body.email || ''),
+        message: String(body.message || ''),
+        reason: body.reason === 'house_quote' ? 'house_quote' : 'question',
+      })
+      json(res, 201, {})
+      return
+    }
+    if (!auth || !isAdmin(auth.email)) {
+      json(res, 401, { message: 'Admin only' })
+      return
+    }
+    json(res, 200, contactRequests)
     return
   }
 

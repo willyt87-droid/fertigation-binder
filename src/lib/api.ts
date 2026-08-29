@@ -3,6 +3,16 @@ import type { Cycle, Entry, EntryDraft, Room, Site, SiteStatus } from '../types'
 import { asNumber, newId, parseNumber } from './format'
 import { DEFAULT_TARGETS, mergeTargets, type FacilityTargets } from './targets'
 
+export type ContactRequest = {
+  id: string
+  created_at: string
+  name: string
+  facility: string
+  email: string
+  message: string
+  reason: 'question' | 'house_quote'
+}
+
 export type AdminFacility = {
   id: string
   name: string
@@ -84,6 +94,9 @@ function mapRoom(row: Record<string, unknown>): Room {
 
 export async function listSites(client: SupabaseClient): Promise<Site[]> {
   const { data: sessionData } = await client.auth.getSession()
+  // Anon is granted only id,name,location,targets,aroya_facility_id. Selecting
+  // status (or any other column) returns permission denied for table sites.
+  // RLS already hides non-active rows from anon; mapSite treats missing status as active.
   const query = sessionData.session
     ? client.from('sites').select(SITE_OWNER_COLUMNS)
     : client.from('sites').select('id,name,location,targets,aroya_facility_id')
@@ -178,6 +191,25 @@ export async function adminSetSiteStatus(
     p_status: status,
   })
   if (error) throw new Error(error.message)
+}
+
+export async function listContactRequests(client: SupabaseClient): Promise<ContactRequest[]> {
+  const { data, error } = await client
+    .from('contact_requests')
+    .select('id,created_at,name,facility,email,message,reason')
+    .order('created_at', { ascending: false })
+  return requireData(data, error).map((row) => {
+    const rec = row as Record<string, unknown>
+    return {
+      id: String(rec.id),
+      created_at: String(rec.created_at),
+      name: String(rec.name ?? ''),
+      facility: String(rec.facility ?? ''),
+      email: String(rec.email ?? ''),
+      message: String(rec.message ?? ''),
+      reason: rec.reason === 'house_quote' ? 'house_quote' : 'question',
+    }
+  })
 }
 
 export async function adminDeleteSite(client: SupabaseClient, siteId: string): Promise<void> {

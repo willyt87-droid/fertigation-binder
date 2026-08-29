@@ -3,6 +3,7 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
+import { binderLoadErrorCopy } from './lib/authErrors'
 import {
   listCycles,
   listEntries,
@@ -181,7 +182,7 @@ export default function App() {
           await loadSiteData(restored, client)
         }
       } catch (err) {
-        if (!cancelled) setBootError(err instanceof Error ? err.message : 'Could not load sites')
+        if (!cancelled) setBootError(binderLoadErrorCopy(err))
       } finally {
         if (!cancelled) setReady(true)
       }
@@ -212,12 +213,6 @@ export default function App() {
       setAdminPath(false)
     }
     clearAppHash()
-  }
-
-  function openOwnerSignup() {
-    setAuthIntent('signup')
-    setScreen('owner-auth')
-    window.history.replaceState({}, '', '/app#signup')
   }
 
   function openOwnerSignIn() {
@@ -447,7 +442,6 @@ export default function App() {
               setSettingsSite(site)
               setRooms(await listRooms(client, site.id))
             }}
-            onOwnerSignup={openOwnerSignup}
             onOwnerAuth={openOwnerSignIn}
             onSignOut={() => void signOut()}
           />

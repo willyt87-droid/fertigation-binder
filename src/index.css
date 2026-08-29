@@ -513,6 +513,21 @@ select:focus {
   background: var(--panel-2);
 }
 
+.thumb-cancel {
+  width: 100%;
+  min-height: var(--touch);
+  margin-top: 16px;
+}
+
+.site-card-hit {
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .sheet h2 {
   margin-bottom: 12px;
   font-size: 20px;

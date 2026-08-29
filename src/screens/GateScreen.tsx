@@ -14,7 +14,6 @@ type GateScreenProps = {
   onUnlock: (site: Site) => void
   onAddFacility?: () => void
   onSettings?: (site: Site) => void
-  onOwnerSignup?: () => void
   onOwnerAuth?: () => void
   onSignOut?: () => void
 }
@@ -26,7 +25,6 @@ export function GateScreen({
   onUnlock,
   onAddFacility,
   onSettings,
-  onOwnerSignup,
   onOwnerAuth,
   onSignOut,
 }: GateScreenProps) {
@@ -41,6 +39,7 @@ export function GateScreen({
   }
 
   async function tryUnlock(site: Site, value: string) {
+    if (site.status !== 'active') return
     if (!isPinShape(value)) return
     try {
       const ok = await checkFloorPin(client, site.id, await hashPin(value))
@@ -61,63 +60,57 @@ export function GateScreen({
       <p className="kicker">Site gate</p>
       <h1 style={{ marginBottom: 8, fontSize: 26 }}>Choose a grow</h1>
       <p className="lede">
-        New facility owners start here. Floor techs unlock a card below with the facility PIN.
-        Session stays until you tap SITES.
+        Floor techs: tap an approved grow, then enter the PIN. Owner sign-in is a second path — not
+        on this pad. Session stays until you tap SITES.
       </p>
-
-      {!owner && onOwnerSignup ? (
-        <div className="stack" style={{ marginBottom: 18 }}>
-          <button type="button" className="btn btn-primary" onClick={onOwnerSignup}>
-            Start owner signup
-          </button>
-          <p className="quiet" style={{ margin: 0 }}>
-            Owner signup is the path for a new facility. Floor unlock stays on the cards.
-          </p>
-        </div>
-      ) : null}
 
       <div className="stack" style={{ marginBottom: 16 }}>
         {sites.length === 0 ? (
           <div className="empty-slot">
             {owner
               ? 'No facilities yet. Add one to start collections.'
-              : 'No floor cards yet. Start owner signup to add a facility.'}
+              : 'No approved grows on this tablet yet.'}
           </div>
         ) : null}
-        {sites.map((site) => (
-          <div key={site.id} className="site-card" style={{ display: 'grid', gap: 10 }}>
-            <button
-              type="button"
-              className="site-card"
-              style={{ padding: 0, border: 0, boxShadow: 'none' }}
-              onClick={() => {
-                setError(null)
-                setUnlockPin('')
-                setUnlocking(site)
-              }}
-            >
-              <h3>{site.name}</h3>
-              <p>
-                {site.location || 'No location'}
-                {site.status === 'active'
-                  ? ' · tap to unlock floor'
-                  : site.status === 'paused'
-                    ? ' · paused — floor PIN locked'
-                    : ' · pending approval — floor PIN locked'}
-              </p>
-              {site.status !== 'active' ? (
-                <span className={`chip status-${site.status}`} style={{ marginTop: 8 }}>
-                  {site.status}
-                </span>
+        {sites.map((site) => {
+          const unlockable = site.status === 'active'
+          return (
+            <div key={site.id} className="site-card" style={{ display: 'grid', gap: 10 }}>
+              {unlockable ? (
+                <button
+                  type="button"
+                  className="site-card site-card-hit"
+                  onClick={() => {
+                    setError(null)
+                    setUnlockPin('')
+                    setUnlocking(site)
+                  }}
+                >
+                  <h3>{site.name}</h3>
+                  <p>{site.location || 'No location'} · tap to unlock floor</p>
+                </button>
+              ) : (
+                <div className="site-card-hit">
+                  <h3>{site.name}</h3>
+                  <p>{site.location || 'No location'}</p>
+                  <span className={`chip status-${site.status}`} style={{ marginTop: 8 }}>
+                    {site.status === 'paused' ? 'Paused' : 'Pending'}
+                  </span>
+                  <p className="quiet" style={{ marginTop: 8 }}>
+                    {site.status === 'paused'
+                      ? 'Paused — floor PIN locked. Not unlockable.'
+                      : 'Pending — waiting for operator approval. Floor is not unlocked.'}
+                  </p>
+                </div>
+              )}
+              {owner && onSettings ? (
+                <button type="button" className="btn btn-ghost" onClick={() => onSettings(site)}>
+                  Settings
+                </button>
               ) : null}
-            </button>
-            {owner && onSettings ? (
-              <button type="button" className="btn btn-ghost" onClick={() => onSettings(site)}>
-                Settings
-              </button>
-            ) : null}
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
 
       {owner && onAddFacility ? (
@@ -163,7 +156,7 @@ export function GateScreen({
               {error}
             </div>
           ) : null}
-          <button type="button" className="btn btn-ghost" style={{ marginTop: 14 }} onClick={closeUnlock}>
+          <button type="button" className="btn btn-ghost thumb-cancel" onClick={closeUnlock}>
             Cancel
           </button>
         </Sheet>

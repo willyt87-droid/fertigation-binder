@@ -136,18 +136,19 @@
           <h3>House</h3>
           <p>
             Custom UI plus in-house coaching. Software is included. Coaching is a retainer, not a
-            monthly toggle. There is no public inbox on this page.
+            monthly toggle. House is a quote — not a live module and not owner signup.
           </p>
-          <details class="house-note">
-            <summary>House is a quote</summary>
-            <p>
-              House is a quote — start Binder for now. The operator follows up after owner signup.
-              There is no public inbox.
-            </p>
-            <p>
-              <a class="cta" href="/app#signup">Start owner signup</a>
-            </p>
-          </details>
+          <form class="ask-form" data-reason="house_quote" novalidate>
+            <p class="kicker">Request a House quote</p>
+            <p class="quiet">No sign-in required. This lands on the operator queue.</p>
+            <label class="ask-field"><span>Name</span><input name="name" autocomplete="name" required /></label>
+            <label class="ask-field"><span>Facility</span><input name="facility" autocomplete="organization" /></label>
+            <label class="ask-field"><span>Email</span><input name="email" type="email" autocomplete="email" required /></label>
+            <input type="hidden" name="reason" value="house_quote" />
+            <label class="ask-field"><span>Message</span><textarea name="message" required></textarea></label>
+            <p class="ask-status quiet" hidden></p>
+            <button type="submit" class="cta">Request a House quote</button>
+          </form>
         </article>
 
         <h2>How billing works</h2>
@@ -157,6 +158,8 @@
           Nothing is charged through December 31, 2026.
         </p>
 
+        <script src="/platform.js"></script>
+        <script src="/ask.js"></script>
         <nav class="foot" aria-label="Legal">
           <a href="/privacy">Privacy</a>
           <span>·</span>
