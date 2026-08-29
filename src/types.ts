@@ -3,6 +3,7 @@ import type { FacilityTargets } from './lib/targets'
 export type RoomType = 'flower' | 'mom' | 'veg'
 export type CycleStatus = 'in_progress' | 'completed'
 export type StageKey = 'early' | 'mid' | 'late'
+export type SiteStatus = 'pending' | 'active' | 'paused'
 
 export type Site = {
   id: string
@@ -10,6 +11,10 @@ export type Site = {
   location: string
   targets: FacilityTargets
   aroya_facility_id: string | null
+  status: SiteStatus
+  created_at: string | null
+  owner_email: string | null
+  aroya_key_saved: boolean
 }
 
 export type Room = {

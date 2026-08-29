@@ -1,7 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Cycle, Entry, EntryDraft, Room, Site } from '../types'
+import type { Cycle, Entry, EntryDraft, Room, Site, SiteStatus } from '../types'
 import { asNumber, newId, parseNumber } from './format'
 import { DEFAULT_TARGETS, mergeTargets, type FacilityTargets } from './targets'
+
+export type AdminFacility = {
+  id: string
+  name: string
+  location: string
+  status: SiteStatus
+  created_at: string | null
+  owner_email: string | null
+  aroya_key_saved: boolean
+  room_count: number
+  last_activity: string | null
+}
 
 let active: { url: string; anonKey: string; client: SupabaseClient } | null = null
 
@@ -25,13 +37,36 @@ function requireData<T>(data: T | null, error: { message: string } | null): T {
   return data
 }
 
+const SITE_OWNER_COLUMNS =
+  'id,name,location,targets,aroya_facility_id,status,created_at,owner_email,aroya_key_saved' as const
+
 function mapSite(row: Record<string, unknown>): Site {
+  const status = row.status
   return {
     id: String(row.id),
     name: String(row.name),
     location: String(row.location ?? ''),
     targets: mergeTargets(row.targets),
     aroya_facility_id: (row.aroya_facility_id as string | null) ?? null,
+    status: status === 'active' || status === 'paused' || status === 'pending' ? status : 'active',
+    created_at: typeof row.created_at === 'string' ? row.created_at : null,
+    owner_email: typeof row.owner_email === 'string' ? row.owner_email : null,
+    aroya_key_saved: row.aroya_key_saved === true,
+  }
+}
+
+function mapAdminFacility(row: Record<string, unknown>): AdminFacility {
+  const site = mapSite(row)
+  return {
+    id: site.id,
+    name: site.name,
+    location: site.location,
+    status: site.status,
+    created_at: site.created_at,
+    owner_email: site.owner_email,
+    aroya_key_saved: site.aroya_key_saved,
+    room_count: asNumber(row.room_count) ?? 0,
+    last_activity: typeof row.last_activity === 'string' ? row.last_activity : null,
   }
 }
 
@@ -48,10 +83,11 @@ function mapRoom(row: Record<string, unknown>): Room {
 }
 
 export async function listSites(client: SupabaseClient): Promise<Site[]> {
-  const { data, error } = await client
-    .from('sites')
-    .select('id,name,location,targets,aroya_facility_id')
-    .order('name')
+  const { data: sessionData } = await client.auth.getSession()
+  const query = sessionData.session
+    ? client.from('sites').select(SITE_OWNER_COLUMNS)
+    : client.from('sites').select('id,name,location,targets,aroya_facility_id')
+  const { data, error } = await query.order('name')
   return requireData(data, error).map((row) => mapSite(row as Record<string, unknown>))
 }
 
@@ -73,13 +109,16 @@ export async function createSite(
     name: input.name.trim(),
     location: input.location.trim(),
     owner_id: user.id,
+    owner_email: user.email ?? null,
     pin_hash: input.pinHash,
     targets: input.targets,
+    status: 'pending',
+    aroya_key_saved: false,
   }
   const { data, error } = await client
     .from('sites')
     .insert(row)
-    .select('id,name,location,targets,aroya_facility_id')
+    .select(SITE_OWNER_COLUMNS)
     .single()
   return mapSite(requireData(data, error) as Record<string, unknown>)
 }
@@ -93,15 +132,57 @@ export async function updateSite(
     pin_hash: string
     targets: FacilityTargets
     aroya_facility_id: string | null
+    aroya_key_saved: boolean
   }>,
 ): Promise<Site> {
   const { data, error } = await client
     .from('sites')
     .update(patch)
     .eq('id', siteId)
-    .select('id,name,location,targets,aroya_facility_id')
+    .select(SITE_OWNER_COLUMNS)
     .single()
   return mapSite(requireData(data, error) as Record<string, unknown>)
+}
+
+export async function listAdminFacilities(client: SupabaseClient): Promise<AdminFacility[]> {
+  const { data, error } = await client
+    .from('admin_facility_queue')
+    .select(
+      'id,name,location,status,created_at,owner_email,aroya_key_saved,room_count,last_activity',
+    )
+    .order('created_at', { ascending: false })
+  if (!error) {
+    return requireData(data, error).map((row) => mapAdminFacility(row as Record<string, unknown>))
+  }
+  const sites = await listSites(client)
+  return sites.map((site) => ({
+    id: site.id,
+    name: site.name,
+    location: site.location,
+    status: site.status,
+    created_at: site.created_at,
+    owner_email: site.owner_email,
+    aroya_key_saved: site.aroya_key_saved,
+    room_count: 0,
+    last_activity: null,
+  }))
+}
+
+export async function adminSetSiteStatus(
+  client: SupabaseClient,
+  siteId: string,
+  status: SiteStatus,
+): Promise<void> {
+  const { error } = await client.rpc('admin_set_site_status', {
+    p_site_id: siteId,
+    p_status: status,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function adminDeleteSite(client: SupabaseClient, siteId: string): Promise<void> {
+  const { error } = await client.rpc('admin_delete_site', { p_site_id: siteId })
+  if (error) throw new Error(error.message)
 }
 
 export async function checkFloorPin(client: SupabaseClient, siteId: string, pinHash: string) {

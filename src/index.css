@@ -721,3 +721,81 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.app-shell.admin-shell {
+  max-width: 860px;
+}
+
+.sites-btn.admin-chrome {
+  letter-spacing: 0.12em;
+}
+
+.admin-hero h1 {
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+
+.admin-card {
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: inset 3px 0 0 var(--cyan), var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.admin-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.admin-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+
+.admin-meta dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-meta dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.chip.status-pending {
+  background: rgba(229, 160, 13, 0.16);
+  color: var(--warn);
+}
+
+.chip.status-active {
+  background: rgba(34, 197, 115, 0.16);
+  color: var(--ok);
+}
+
+.chip.status-paused {
+  background: rgba(155, 132, 255, 0.18);
+  color: var(--purple);
+}
+
+@media (max-width: 520px) {
+  .admin-meta {
+    grid-template-columns: 1fr;
+  }
+}

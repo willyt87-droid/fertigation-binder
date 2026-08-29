@@ -30,7 +30,7 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not connect'
       setError(
-        `${message}. Create an empty Supabase project, run supabase/migrations/20260829143600_init.sql, then paste that project's URL and anon key. Do not use a live pilot database.`,
+        `${message}. Create an empty Supabase project, run the SQL files in supabase/migrations/ in order, then paste that project's URL and anon key. Do not use a live pilot database.`,
       )
     } finally {
       setBusy(false)
