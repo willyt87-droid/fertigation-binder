@@ -1,4 +1,4 @@
-const CACHE = 'fertigation-binder-v2'
+const CACHE = 'fertigation-binder-v3'
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
@@ -27,16 +27,15 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     const path = url.pathname.replace(/\/+$/, '') || '/'
     const isApp = path === '/app' || path === '/admin' || path.startsWith('/app/')
+    if (!isApp) return
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (isApp) {
-            const copy = response.clone()
-            caches.open(CACHE).then((cache) => cache.put('/app/index.html', copy))
-          }
+          const copy = response.clone()
+          caches.open(CACHE).then((cache) => cache.put('/app/index.html', copy))
           return response
         })
-        .catch(() => (isApp ? caches.match('/app/index.html') : caches.match(request))),
+        .catch(() => caches.match('/app/index.html')),
     )
     return
   }
