@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Droplet } from '../components/Droplet'
+import { ownerAuthErrorCopy } from '../lib/authErrors'
 import { ownerSetupKicker, PENDING_FLOOR_NOTE, remainingSetupSteps } from '../lib/ownerSetup'
 
 type OwnerAuthScreenProps = {
@@ -40,7 +41,7 @@ export function OwnerAuthScreen({
       if (otpError) throw otpError
       setSent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send link')
+      setError(ownerAuthErrorCopy(err))
     } finally {
       setBusy(false)
     }
@@ -67,7 +68,7 @@ export function OwnerAuthScreen({
       if (sessionError) throw sessionError
       onSignedIn()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Mock sign-in failed')
+      setError(ownerAuthErrorCopy(err))
     } finally {
       setBusy(false)
     }

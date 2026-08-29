@@ -3,6 +3,16 @@ import type { Cycle, Entry, EntryDraft, Room, Site, SiteStatus } from '../types'
 import { asNumber, newId, parseNumber } from './format'
 import { DEFAULT_TARGETS, mergeTargets, type FacilityTargets } from './targets'
 
+export type ContactRequest = {
+  id: string
+  created_at: string
+  name: string
+  facility: string
+  email: string
+  message: string
+  reason: 'question' | 'house_quote'
+}
+
 export type AdminFacility = {
   id: string
   name: string
@@ -48,7 +58,7 @@ function mapSite(row: Record<string, unknown>): Site {
     location: String(row.location ?? ''),
     targets: mergeTargets(row.targets),
     aroya_facility_id: (row.aroya_facility_id as string | null) ?? null,
-    status: status === 'active' || status === 'paused' || status === 'pending' ? status : 'active',
+    status: status === 'active' || status === 'paused' || status === 'pending' ? status : 'pending',
     created_at: typeof row.created_at === 'string' ? row.created_at : null,
     owner_email: typeof row.owner_email === 'string' ? row.owner_email : null,
     aroya_key_saved: row.aroya_key_saved === true,
@@ -86,7 +96,7 @@ export async function listSites(client: SupabaseClient): Promise<Site[]> {
   const { data: sessionData } = await client.auth.getSession()
   const query = sessionData.session
     ? client.from('sites').select(SITE_OWNER_COLUMNS)
-    : client.from('sites').select('id,name,location,targets,aroya_facility_id')
+    : client.from('sites').select('id,name,location,targets,aroya_facility_id,status')
   const { data, error } = await query.order('name')
   return requireData(data, error).map((row) => mapSite(row as Record<string, unknown>))
 }
@@ -178,6 +188,25 @@ export async function adminSetSiteStatus(
     p_status: status,
   })
   if (error) throw new Error(error.message)
+}
+
+export async function listContactRequests(client: SupabaseClient): Promise<ContactRequest[]> {
+  const { data, error } = await client
+    .from('contact_requests')
+    .select('id,created_at,name,facility,email,message,reason')
+    .order('created_at', { ascending: false })
+  return requireData(data, error).map((row) => {
+    const rec = row as Record<string, unknown>
+    return {
+      id: String(rec.id),
+      created_at: String(rec.created_at),
+      name: String(rec.name ?? ''),
+      facility: String(rec.facility ?? ''),
+      email: String(rec.email ?? ''),
+      message: String(rec.message ?? ''),
+      reason: rec.reason === 'house_quote' ? 'house_quote' : 'question',
+    }
+  })
 }
 
 export async function adminDeleteSite(client: SupabaseClient, siteId: string): Promise<void> {

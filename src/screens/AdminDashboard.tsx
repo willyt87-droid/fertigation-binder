@@ -5,8 +5,10 @@ import {
   adminDeleteSite,
   adminSetSiteStatus,
   listAdminFacilities,
+  listContactRequests,
   listRooms,
   type AdminFacility,
+  type ContactRequest,
 } from '../lib/api'
 import { formatTimestamp } from '../lib/format'
 import type { Room, SiteStatus } from '../types'
@@ -25,6 +27,7 @@ export function AdminDashboard({
   onChangeConnection,
 }: AdminDashboardProps) {
   const [queue, setQueue] = useState<AdminFacility[]>([])
+  const [asks, setAsks] = useState<ContactRequest[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [open, setOpen] = useState<AdminFacility | null>(null)
@@ -35,6 +38,11 @@ export function AdminDashboard({
     setError(null)
     try {
       setQueue(await listAdminFacilities(client))
+      try {
+        setAsks(await listContactRequests(client))
+      } catch {
+        setAsks([])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load newcomers')
     }
@@ -97,6 +105,39 @@ export function AdminDashboard({
 
       {error ? <div className="error">{error}</div> : null}
 
+      <h2 className="group-title">Asks</h2>
+      {asks.length === 0 ? (
+        <div className="empty-slot">No public questions or House quotes yet.</div>
+      ) : (
+        <div className="stack" style={{ marginBottom: 22 }}>
+          {asks.map((ask) => (
+            <article key={ask.id} className="admin-card">
+              <div className="admin-card-top">
+                <div>
+                  <h3>{ask.name}</h3>
+                  <p className="quiet">{ask.facility || 'No facility named'}</p>
+                </div>
+                <span className="chip type">
+                  {ask.reason === 'house_quote' ? 'House quote' : 'Question'}
+                </span>
+              </div>
+              <dl className="admin-meta">
+                <div>
+                  <dt>Email</dt>
+                  <dd>{ask.email}</dd>
+                </div>
+                <div>
+                  <dt>Received</dt>
+                  <dd>{formatTimestamp(ask.created_at)}</dd>
+                </div>
+              </dl>
+              <p style={{ margin: 0 }}>{ask.message}</p>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <h2 className="group-title">Facilities</h2>
       {queue.length === 0 ? (
         <div className="empty-slot">
           No facilities yet. Owners sign up with a magic link; their grows appear here for approval.
