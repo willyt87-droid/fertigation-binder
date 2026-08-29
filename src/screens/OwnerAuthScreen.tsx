@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Droplet } from '../components/Droplet'
-import { ownerAuthErrorCopy } from '../lib/authErrors'
+import { cannotReceiveMagicLink, ownerAuthErrorCopy } from '../lib/authErrors'
 import { ownerSetupKicker, PENDING_FLOOR_NOTE, remainingSetupSteps } from '../lib/ownerSetup'
 
 type OwnerAuthScreenProps = {
@@ -30,6 +30,10 @@ export function OwnerAuthScreen({
     setError(null)
     if (!email.trim() || !email.includes('@')) {
       setError(admin ? 'Enter the allowlisted operator email.' : 'Enter an owner email.')
+      return
+    }
+    if (!admin && cannotReceiveMagicLink(email)) {
+      setError('That address cannot receive a sign-in link. Use an inbox that can.')
       return
     }
     setBusy(true)
@@ -76,7 +80,9 @@ export function OwnerAuthScreen({
 
   return (
     <div className="app-main plain">
-      <p className="kicker">{admin ? 'Platform admin' : ownerSetupKicker(1)}</p>
+      <p className="kicker">
+        {admin ? 'Platform admin' : signup ? ownerSetupKicker(1) : 'Owner sign-in'}
+      </p>
       <div className="config-hero">
         <Droplet size={42} />
         <h1>{admin ? 'Operator sign-in' : signup ? 'Start owner signup' : 'Owner sign-in'}</h1>

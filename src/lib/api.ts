@@ -58,7 +58,7 @@ function mapSite(row: Record<string, unknown>): Site {
     location: String(row.location ?? ''),
     targets: mergeTargets(row.targets),
     aroya_facility_id: (row.aroya_facility_id as string | null) ?? null,
-    status: status === 'active' || status === 'paused' || status === 'pending' ? status : 'pending',
+    status: status === 'active' || status === 'paused' || status === 'pending' ? status : 'active',
     created_at: typeof row.created_at === 'string' ? row.created_at : null,
     owner_email: typeof row.owner_email === 'string' ? row.owner_email : null,
     aroya_key_saved: row.aroya_key_saved === true,

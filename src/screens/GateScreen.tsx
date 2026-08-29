@@ -100,10 +100,7 @@ export function GateScreen({
                   }}
                 >
                   <h3>{site.name}</h3>
-                  <p>{site.location || 'No location'} · tap to unlock</p>
-                  <span className="chip status-active" style={{ marginTop: 8 }}>
-                    Approved
-                  </span>
+                  <p>{site.location || 'No location'} · tap to unlock floor</p>
                 </button>
               ) : (
                 <div className="site-card-hit">
