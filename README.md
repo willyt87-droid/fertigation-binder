@@ -37,8 +37,8 @@ If WT uses **Owner sign-in** on `/app` with an allowlisted email, the app skips 
 ### How an owner signs up
 
 1. Connect the same project (URL + anon key).
-2. From the site gate, **Owner sign-in** → magic link (any non-admin email).
-3. Wizard: facility (name, location, floor PIN) → rooms (optional) → targets. The facility is created as **pending**.
+2. From the site gate, **Start owner signup** (or **Owner sign-in** if you already have an account) → magic link (any non-admin email).
+3. Wizard: email → facility (name, location, floor PIN) → rooms (optional) → targets. The facility is created as **pending**.
 4. Owner can finish setup in Settings. Floor PIN does **not** unlock until a platform admin sets status to **active**. Pause locks the PIN again without impersonating the owner.
 
 ## Run locally
@@ -57,7 +57,7 @@ npm run build
 
 Then `npm run preview` or deploy `dist/` (Netlify uses `netlify.toml`).
 
-On first launch the app asks for a Supabase URL and anon key and stores them in **localStorage only**. They are never committed. Enable Email auth (magic link) on that project.
+The public `/app` gate uses the Binder product project by default. Operators can point a local or staging copy at another empty project from **`/admin`** or **`/app#reconnect`** (URL + anon key stay in **localStorage** on that device). Enable Email auth (magic link) on that project.
 
 Optional local stub (no Supabase project) for UI checks:
 
@@ -76,7 +76,7 @@ Then paste `http://127.0.0.1:8787` and any anon key such as `local`. Use **Conti
    - [`supabase/migrations/20260829180000_platform_admin.sql`](supabase/migrations/20260829180000_platform_admin.sql)
 3. Authentication → Providers: Email enabled (magic link).
 4. Project Settings → API: copy the project URL and the **anon public** key (never the service_role key).
-5. Open **`/app`**, paste URL + anon key, save. Admins go to `/admin`. Owners sign in, then create a facility.
+5. Open **`/app#reconnect`** (operator only), paste URL + anon key, save. Admins go to `/admin`. Owners use **Start owner signup**, then create a facility.
 
 If you use the CLI against this new project:
 
@@ -94,11 +94,11 @@ Row-level security after the admin migration: platform admins can `SELECT` every
 
 ## Using the binder
 
-1. **Connect** — paste a new project URL + anon key.
-2. **Owner** — magic link, then wizard: facility (name, location, floor PIN) → rooms (optional) → targets. Status starts pending.
+1. **Connect** — public visitors use the product project. Operators paste URL + anon key only at `/app#reconnect`.
+2. **Owner** — **Start owner signup**, magic link, then wizard: facility (name, location, floor PIN) → rooms (optional) → targets. Status starts pending.
 3. **Admin** — `/admin` newcomers queue: owner email, name/location, created at, room count, status. Approve so floor PIN works; pause to lock it; remove to delete the grow.
 4. **SITES** — one card per facility the current role can see. Floor: tap card, enter PIN (active only). Owner: Settings on the card (works while pending).
-5. **Join the Binder** — “Email to join the binder and start collections.” Button **Email the Fertigation Binder** copies that sentence; no `mailto:`.
+5. **Start owner signup** on the site gate opens the same owner-setup magic-link flow as `/app#signup`. **Owner sign-in** is for returning owners. The connection form and **Change connection** stay on `/admin` or `/app#reconnect` (operator only).
 6. Floor session lasts until **SITES**.
 7. **Overview** — Flower and Mom/Veg groups. Room add/remove/reorder is owner settings, not the floor tablet.
 8. **Flower rooms** — start a cycle. Stage: Early 1–21 (green), Mid Bulk 22–42 (blue), Late 43+ (purple).
@@ -126,7 +126,7 @@ Swagger: https://api.aroya.io/public_api/swagger/
 
 Indexable HTML (not the app shell). `robots.txt` and `sitemap.xml` list only these four URLs:
 
-- `/` — marketing home. Title is **The Fertigation Binder | Log feed and runoff by room**. H1 is “The tablet on the greenhouse floor.” Binder promo (free through December 31, 2026) plus a short Binder / Floor / Link / House strip. CTA starts owner signup at `/app#signup`.
+- `/` — marketing home. Title is **The Fertigation Binder | Log feed and runoff by room**. H1 is “The tablet on the greenhouse floor.” Binder promo (free through December 31, 2026) plus a short Binder / Floor / Link / House strip. CTA is **Start owner signup** at `/app#signup`.
 - `/pricing` — product ladder. Binder is live and free through December 31, 2026, then **$49/facility/month**. Floor $149 and Link $249 are coming. House is a custom quote. No Stripe.
 - `/privacy` — what the binder stores (fertigation logs, facility/room config, optional local keys, magic-link email). Grower data is not sold.
 - `/terms` — owner / floor / operator rules and the per-facility subscription.

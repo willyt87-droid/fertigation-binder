@@ -15,9 +15,15 @@ type AdminDashboardProps = {
   client: SupabaseClient
   adminEmail: string
   onSignOut: () => void
+  onChangeConnection?: () => void
 }
 
-export function AdminDashboard({ client, adminEmail, onSignOut }: AdminDashboardProps) {
+export function AdminDashboard({
+  client,
+  adminEmail,
+  onSignOut,
+  onChangeConnection,
+}: AdminDashboardProps) {
   const [queue, setQueue] = useState<AdminFacility[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -167,6 +173,14 @@ export function AdminDashboard({ client, adminEmail, onSignOut }: AdminDashboard
         <button type="button" className="linkish" onClick={onSignOut}>
           Sign out
         </button>
+        {onChangeConnection ? (
+          <>
+            <span className="quiet"> · </span>
+            <button type="button" className="linkish" onClick={onChangeConnection}>
+              Change connection
+            </button>
+          </>
+        ) : null}
       </p>
 
       {open ? (

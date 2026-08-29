@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { makeClient, testConnection } from '../lib/api'
-import { saveConfig } from '../lib/storage'
+import { isBlockedProject, saveConfig, type StoredConfig } from '../lib/storage'
 import { Droplet } from '../components/Droplet'
 import { LegalLinks } from '../components/LegalLinks'
 
 type ConfigScreenProps = {
+  initial?: StoredConfig | null
   onReady: () => void
+  onCancel?: () => void
 }
 
-export function ConfigScreen({ onReady }: ConfigScreenProps) {
-  const [url, setUrl] = useState('')
-  const [anonKey, setAnonKey] = useState('')
+export function ConfigScreen({ initial, onReady, onCancel }: ConfigScreenProps) {
+  const [url, setUrl] = useState(initial?.url ?? '')
+  const [anonKey, setAnonKey] = useState(initial?.anonKey ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -22,6 +24,10 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
       setError('Paste both the project URL and the anon key.')
       return
     }
+    if (isBlockedProject(trimmedUrl)) {
+      setError('That project is not allowed for this product.')
+      return
+    }
     setBusy(true)
     try {
       const client = makeClient(trimmedUrl, trimmedKey)
@@ -31,7 +37,7 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not connect'
       setError(
-        `${message}. Create an empty Supabase project, run the SQL files in supabase/migrations/ in order, then paste that project's URL and anon key. Do not use a live pilot database.`,
+        `${message}. Use an empty product project with the SQL files in supabase/migrations/ applied, then paste that project's URL and anon key.`,
       )
     } finally {
       setBusy(false)
@@ -42,11 +48,11 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
     <div className="app-main plain">
       <div className="config-hero">
         <Droplet size={42} />
-        <h1>Connect this binder</h1>
+        <h1>Operator connection</h1>
       </div>
       <p className="lede">
-        First run starts empty. Paste the URL and anon key for a new Supabase project. Nothing is
-        pre-filled. This app is a product clone — it must not use a live pilot project.
+        Advanced only. The public gate already uses the product project. Change this only if you are
+        pointing a local or staging binder at a different empty project.
       </p>
       <div className="form-card stack">
         <label className="field">
@@ -78,6 +84,11 @@ export function ConfigScreen({ onReady }: ConfigScreenProps) {
         <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
           {busy ? 'Checking…' : 'Save and continue'}
         </button>
+        {onCancel ? (
+          <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+        ) : null}
       </div>
       <LegalLinks />
     </div>

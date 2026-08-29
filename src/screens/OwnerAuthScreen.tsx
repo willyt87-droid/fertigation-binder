@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Droplet } from '../components/Droplet'
+import { ownerSetupKicker, PENDING_FLOOR_NOTE, remainingSetupSteps } from '../lib/ownerSetup'
 
 type OwnerAuthScreenProps = {
   client: SupabaseClient
   mockAuth?: boolean
   mockOrigin?: string
-  mode?: 'owner' | 'admin'
+  mode?: 'signup' | 'signin' | 'admin'
   onSignedIn: () => void
 }
 
@@ -14,10 +15,11 @@ export function OwnerAuthScreen({
   client,
   mockAuth,
   mockOrigin,
-  mode = 'owner',
+  mode = 'signin',
   onSignedIn,
 }: OwnerAuthScreenProps) {
   const admin = mode === 'admin'
+  const signup = mode === 'signup'
   const [email, setEmail] = useState(admin ? 'willyt87@gmail.com' : '')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,15 +75,17 @@ export function OwnerAuthScreen({
 
   return (
     <div className="app-main plain">
-      <p className="kicker">{admin ? 'Platform admin' : 'Owner setup · 1 / 4'}</p>
+      <p className="kicker">{admin ? 'Platform admin' : ownerSetupKicker(1)}</p>
       <div className="config-hero">
         <Droplet size={42} />
-        <h1>{admin ? 'Operator sign-in' : 'Owner sign-in'}</h1>
+        <h1>{admin ? 'Operator sign-in' : signup ? 'Start owner signup' : 'Owner sign-in'}</h1>
       </div>
       <p className="lede">
         {admin
           ? 'Magic link for the product operator. Allowlisted emails land on /admin. You will not create a facility.'
-          : 'Email a magic link to set up facilities, rooms, and targets. Floor techs do not need an account — they unlock the tablet with the facility PIN.'}
+          : signup
+            ? `${remainingSetupSteps(1)} Facility includes name, location, and the floor PIN. ${PENDING_FLOOR_NOTE}`
+            : 'Email a magic link to return to your facilities. Floor techs do not need an account — they unlock the tablet with the facility PIN.'}
       </p>
       <div className="form-card stack">
         <label className="field">

@@ -13,7 +13,6 @@ import {
   startCycle,
 } from './lib/api'
 import {
-  clearConfig,
   clearSession,
   loadConfig,
   loadSessionSiteId,
@@ -32,6 +31,16 @@ import { StartCycleSheet } from './screens/StartCycleSheet'
 import type { Cycle, Entry, EntryDraft, Room, Site } from './types'
 
 type Screen = 'gate' | 'owner-auth' | 'wizard'
+type AuthIntent = 'signup' | 'signin'
+
+function currentHash() {
+  return window.location.hash.replace(/^#/, '')
+}
+
+function clearAppHash() {
+  if (!window.location.hash) return
+  window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`)
+}
 
 export default function App() {
   const [config, setConfig] = useState(() => loadConfig())
@@ -51,8 +60,12 @@ export default function App() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [bootError, setBootError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
+  const [reconnect, setReconnect] = useState(() => currentHash() === 'reconnect')
+  const [authIntent, setAuthIntent] = useState<AuthIntent>(() =>
+    currentHash() === 'signup' ? 'signup' : 'signin',
+  )
   const [screen, setScreen] = useState<Screen>(() =>
-    window.location.hash === '#signup' ? 'owner-auth' : 'gate',
+    currentHash() === 'signup' ? 'owner-auth' : 'gate',
   )
   const [startingCycle, setStartingCycle] = useState(false)
   const [entryEditor, setEntryEditor] = useState<Entry | 'new' | null>(null)
@@ -113,7 +126,17 @@ export default function App() {
 
   useEffect(() => {
     const onHash = () => {
-      if (window.location.hash === '#signup') setScreen('owner-auth')
+      const hash = currentHash()
+      if (hash === 'signup') {
+        setAuthIntent('signup')
+        setScreen('owner-auth')
+        setReconnect(false)
+        return
+      }
+      if (hash === 'reconnect') {
+        setReconnect(true)
+        setScreen('gate')
+      }
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
@@ -179,6 +202,7 @@ export default function App() {
     setStartingCycle(false)
     setEntryEditor(null)
     setSettingsSite(null)
+    setReconnect(false)
     setScreen('gate')
     if (isAdmin) {
       goPath('/admin')
@@ -187,6 +211,24 @@ export default function App() {
       goPath('/app')
       setAdminPath(false)
     }
+    clearAppHash()
+  }
+
+  function openOwnerSignup() {
+    setAuthIntent('signup')
+    setScreen('owner-auth')
+    window.history.replaceState({}, '', '/app#signup')
+  }
+
+  function openOwnerSignIn() {
+    setAuthIntent('signin')
+    setScreen('owner-auth')
+    clearAppHash()
+  }
+
+  function openReconnect() {
+    setReconnect(true)
+    window.history.replaceState({}, '', `${window.location.pathname}#reconnect`)
   }
 
   async function unlock(site: Site) {
@@ -221,14 +263,13 @@ export default function App() {
     await loadRoomEntries(selectedRoom, cycles, client)
   }
 
-  function changeConnection() {
-    clearConfig()
-    goSites()
-    setConfig(null)
-    setSites([])
-    setOwner(null)
-    setIsAdmin(false)
+  function finishReconnect() {
+    setReconnect(false)
     setBootError(null)
+    setReady(false)
+    setConfig(loadConfig())
+    goPath('/app')
+    clearAppHash()
   }
 
   async function finishOwnerSignIn() {
@@ -240,6 +281,7 @@ export default function App() {
     setScreen(next.length === 0 ? 'wizard' : 'gate')
     goPath('/app')
     setAdminPath(false)
+    clearAppHash()
   }
 
   async function signOut() {
@@ -255,22 +297,31 @@ export default function App() {
     return (
       <div className="app-shell">
         <Header showSites={false} />
-        <div className="app-main">
+        <div className="app-main loading-pane" role="status" aria-live="polite">
+          <div className="spinner" aria-hidden="true" />
           <p className="lede">Loading binder…</p>
+          <div className="skeleton-stack" aria-hidden="true">
+            <div className="skeleton-card" />
+            <div className="skeleton-card" />
+            <div className="skeleton-card short" />
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!config || !client) {
+  if (reconnect || !config || !client) {
     return (
       <div className="app-shell">
         <Header showSites={false} />
         <ConfigScreen
-          onReady={() => {
-            setConfig(loadConfig())
-            setReady(false)
-          }}
+          initial={config}
+          onReady={finishReconnect}
+          onCancel={config ? () => {
+            setReconnect(false)
+            goPath(adminPath ? '/admin' : '/app')
+            clearAppHash()
+          } : undefined}
         />
       </div>
     )
@@ -280,7 +331,12 @@ export default function App() {
     return (
       <div className="app-shell admin-shell">
         <Header admin onSites={() => void signOut()} />
-        <AdminDashboard client={client} adminEmail={owner?.email ?? ''} onSignOut={() => void signOut()} />
+        <AdminDashboard
+          client={client}
+          adminEmail={owner?.email ?? ''}
+          onSignOut={() => void signOut()}
+          onChangeConnection={openReconnect}
+        />
       </div>
     )
   }
@@ -334,6 +390,7 @@ export default function App() {
           client={client}
           mockAuth={mockAuth}
           mockOrigin={config.url}
+          mode={authIntent === 'signup' ? 'signup' : 'signin'}
           onSignedIn={() => void finishOwnerSignIn()}
         />
       </div>
@@ -366,8 +423,16 @@ export default function App() {
           <div className="app-main">
             <div className="error">{bootError}</div>
             <p style={{ marginTop: 12 }}>
-              <button type="button" className="linkish" onClick={changeConnection}>
-                Change connection
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setReady(false)
+                  setBootError(null)
+                  setConfig(loadConfig())
+                }}
+              >
+                Try again
               </button>
             </p>
           </div>
@@ -382,9 +447,9 @@ export default function App() {
               setSettingsSite(site)
               setRooms(await listRooms(client, site.id))
             }}
-            onOwnerAuth={() => setScreen('owner-auth')}
+            onOwnerSignup={openOwnerSignup}
+            onOwnerAuth={openOwnerSignIn}
             onSignOut={() => void signOut()}
-            onChangeConnection={changeConnection}
           />
         )}
         {settingsSite && owner ? (

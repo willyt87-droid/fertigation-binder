@@ -482,12 +482,35 @@ select:focus {
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
+.sheet-head {
+  position: relative;
+  min-height: 28px;
+}
+
 .sheet-handle {
   width: 46px;
   height: 4px;
   border-radius: 99px;
   background: var(--line-strong);
   margin: 6px auto 12px;
+}
+
+.sheet-close {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.sheet-close:active {
+  background: var(--panel-2);
 }
 
 .sheet h2 {
@@ -818,4 +841,66 @@ a.linkish:hover {
 
 .legal-links .linkish.current {
   color: var(--ink);
+}
+
+.loading-pane {
+  display: grid;
+  justify-items: stretch;
+  align-content: start;
+  gap: 16px;
+  padding-top: 28px;
+}
+
+.loading-pane .lede {
+  margin: 0;
+  text-align: center;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  margin: 8px auto 0;
+  border: 3px solid rgba(34, 211, 238, 0.18);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+}
+
+.skeleton-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-card {
+  min-height: 84px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: linear-gradient(
+    90deg,
+    var(--panel) 0%,
+    #1a3d2e 45%,
+    var(--panel) 90%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-card.short {
+  min-height: 56px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }

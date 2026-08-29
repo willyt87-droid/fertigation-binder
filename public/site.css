@@ -309,6 +309,36 @@ h2 {
   font-size: 20px;
 }
 
+.house-note {
+  margin-top: 8px;
+}
+
+.house-note summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.house-note summary::-webkit-details-marker {
+  display: none;
+}
+
+.house-note[open] summary {
+  margin-bottom: 10px;
+}
+
+.house-note p {
+  color: var(--muted);
+}
+
 @media (max-width: 420px) {
   .tier-strip {
     grid-template-columns: 1fr;
