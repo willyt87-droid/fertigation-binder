@@ -114,7 +114,14 @@ export function GateScreen({
         <p className="kicker">New site</p>
         <label className="field">
           <span>Name</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Grow name" />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Grow name"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+          />
         </label>
         <label className="field">
           <span>Location</span>

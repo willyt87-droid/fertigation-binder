@@ -128,7 +128,9 @@ export function EntryForm({ room, entry, onClose, onSave }: EntryFormProps) {
             value={draft.tech}
             onChange={(e) => patch('tech', e.target.value.slice(0, 4))}
             placeholder="WT"
+            name="tech-initials"
             autoCapitalize="characters"
+            autoComplete="off"
           />
         </label>
         <label className="field">

@@ -2,10 +2,15 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Cycle, Entry, EntryDraft, Room, Site } from '../types'
 import { asNumber, newId, parseNumber } from './format'
 
+let active: { url: string; anonKey: string; client: SupabaseClient } | null = null
+
 export function makeClient(url: string, anonKey: string): SupabaseClient {
-  return createClient(url, anonKey, {
+  if (active && active.url === url && active.anonKey === anonKey) return active.client
+  const client = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   })
+  active = { url, anonKey, client }
+  return client
 }
 
 export async function testConnection(client: SupabaseClient) {
