@@ -21,9 +21,17 @@ type FacilitySettingsProps = {
   rooms: Room[]
   onClose: () => void
   onChange: (site: Site, rooms: Room[]) => void
+  hidePin?: boolean
 }
 
-export function FacilitySettings({ client, site, rooms, onClose, onChange }: FacilitySettingsProps) {
+export function FacilitySettings({
+  client,
+  site,
+  rooms,
+  onClose,
+  onChange,
+  hidePin = false,
+}: FacilitySettingsProps) {
   const [name, setName] = useState(site.name)
   const [location, setLocation] = useState(site.location)
   const [targets, setTargets] = useState<FacilityTargets>(() => structuredClone(site.targets))
@@ -45,7 +53,7 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
     setBusy(true)
     setError(null)
     try {
-      if (pin && (!isPinShape(pin) || pin !== confirm)) {
+      if (!hidePin && pin && (!isPinShape(pin) || pin !== confirm)) {
         throw new Error('New floor PIN must be 4 digits, entered twice.')
       }
       saveAroyaKey(aroyaKey)
@@ -56,7 +64,7 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
         aroya_facility_id: aroyaFacilityId.trim() || null,
         aroya_key_saved: Boolean(aroyaKey.trim()),
       }
-      if (isPinShape(pin) && pin === confirm) {
+      if (!hidePin && isPinShape(pin) && pin === confirm) {
         patch.pin_hash = await hashPin(pin)
       }
       const next = await updateSite(client, site.id, patch)
@@ -190,12 +198,20 @@ export function FacilitySettings({ client, site, rooms, onClose, onChange }: Fac
           </button>
         </div>
 
-        <p className="kicker">Floor PIN</p>
-        <p className="quiet">Leave blank to keep the current PIN. New PIN is stored as a hash.</p>
-        <PinPad
-          value={pinPhase === 'pin' ? pin : confirm}
-          onChange={pinPhase === 'pin' ? setPin : setConfirm}
-        />
+        {hidePin ? (
+          <p className="quiet">
+            Floor PIN stays with the owner. Support view does not show or change it.
+          </p>
+        ) : (
+          <>
+            <p className="kicker">Floor PIN</p>
+            <p className="quiet">Leave blank to keep the current PIN. New PIN is stored as a hash.</p>
+            <PinPad
+              value={pinPhase === 'pin' ? pin : confirm}
+              onChange={pinPhase === 'pin' ? setPin : setConfirm}
+            />
+          </>
+        )}
 
         <p className="kicker">Binder logging</p>
         <RangeRow

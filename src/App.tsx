@@ -2,9 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
-import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
+import {
+  adminViewSiteId,
+  goAdmin,
+  goPath,
+  isAdminPath,
+  isPlatformAdmin,
+} from './lib/admin'
 import { binderLoadErrorCopy } from './lib/authErrors'
 import {
+  getSite,
   listCycles,
   listEntries,
   listRooms,
@@ -19,6 +26,7 @@ import {
   loadSessionSiteId,
   saveSessionSiteId,
 } from './lib/storage'
+import { SupportBanner } from './components/SupportBanner'
 import { AdminDashboard } from './screens/AdminDashboard'
 import { ConfigScreen } from './screens/ConfigScreen'
 import { EntryForm } from './screens/EntryForm'
@@ -53,6 +61,9 @@ export default function App() {
   const [owner, setOwner] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminPath, setAdminPath] = useState(() => isAdminPath())
+  const [adminView, setAdminView] = useState(() => adminViewSiteId())
+  const [supportSite, setSupportSite] = useState<Site | null>(null)
+  const [supportError, setSupportError] = useState<string | null>(null)
   const [sites, setSites] = useState<Site[]>([])
   const [sessionSite, setSessionSite] = useState<Site | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
@@ -111,7 +122,7 @@ export default function App() {
     const admin = user ? await isPlatformAdmin(db, user) : false
     setIsAdmin(admin)
     if (admin) {
-      goPath('/admin')
+      if (!isAdminPath()) goPath('/admin')
       setAdminPath(true)
       setScreen('gate')
       setSessionSite(null)
@@ -120,7 +131,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const onPop = () => setAdminPath(isAdminPath())
+    const onPop = () => {
+      setAdminPath(isAdminPath())
+      setAdminView(adminViewSiteId())
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
@@ -193,6 +207,46 @@ export default function App() {
     }
   }, [applyUser, client, loadSiteData, refreshSites])
 
+  useEffect(() => {
+    if (!client || !isAdmin || !adminPath || !adminView) return
+    let cancelled = false
+    async function openSupport(db: SupabaseClient, siteId: string) {
+      setSupportError(null)
+      try {
+        const site = await getSite(db, siteId)
+        if (cancelled) return
+        setSupportSite(site)
+        setSelectedRoomId(null)
+        setEntries([])
+        setStartingCycle(false)
+        setEntryEditor(null)
+        setSettingsSite(null)
+        await loadSiteData(site, db)
+      } catch (err) {
+        if (cancelled) return
+        setSupportSite(null)
+        setSupportError(err instanceof Error ? err.message : 'Could not open owner view')
+      }
+    }
+    void openSupport(client, adminView)
+    return () => {
+      cancelled = true
+    }
+  }, [adminPath, adminView, client, isAdmin, loadSiteData])
+
+  function exitSupportView() {
+    setSupportSite(null)
+    setSupportError(null)
+    setSelectedRoomId(null)
+    setEntries([])
+    setRooms([])
+    setCycles([])
+    setStartingCycle(false)
+    setEntryEditor(null)
+    setSettingsSite(null)
+    goAdmin()
+  }
+
   function goSites() {
     clearSession()
     setSessionSite(null)
@@ -206,7 +260,7 @@ export default function App() {
     setReconnect(false)
     setScreen('gate')
     if (isAdmin) {
-      goPath('/admin')
+      goAdmin()
       setAdminPath(true)
     } else {
       goPath('/app')
@@ -236,6 +290,7 @@ export default function App() {
   }
 
   async function handleStartCycle(startDate: string) {
+    if (isAdmin || supportSite || adminView) return
     if (!client || !selectedRoom) return
     const cycle = await startCycle(client, { roomId: selectedRoom.id, startDate })
     const nextCycles = await listCycles(
@@ -249,6 +304,9 @@ export default function App() {
   }
 
   async function handleSaveEntry(draft: EntryDraft, id?: string) {
+    if (isAdmin || supportSite || adminView) {
+      throw new Error('Support view cannot write floor collections.')
+    }
     if (!client || !selectedRoom || !sessionSite) return
     if (selectedRoom.type === 'flower' && selectedCycle && draft.date < selectedCycle.start_date) {
       throw new Error(`Date must be on or after cycle start (${selectedCycle.start_date}).`)
@@ -323,6 +381,84 @@ export default function App() {
   }
 
   if (isAdmin) {
+    if (adminView && supportSite) {
+      const supportRoom = rooms.find((room) => room.id === selectedRoomId)
+      const supportCycle = supportRoom
+        ? cycles.find((cycle) => cycle.room_id === supportRoom.id && cycle.status === 'in_progress')
+        : undefined
+      return (
+        <div className="app-shell admin-shell">
+          <Header
+            admin
+            support
+            siteName={supportSite.name}
+            onSites={exitSupportView}
+          />
+          <SupportBanner
+            facilityName={supportSite.name}
+            status={supportSite.status}
+            onBack={exitSupportView}
+            onSettings={() => setSettingsSite(supportSite)}
+          />
+          {supportRoom ? (
+            <RoomScreen
+              room={supportRoom}
+              cycle={supportCycle}
+              entries={entries}
+              targets={supportSite.targets}
+              readOnly
+              onStartCycle={() => undefined}
+              onAddEntry={() => undefined}
+              onEditEntry={() => undefined}
+            />
+          ) : (
+            <OverviewScreen
+              rooms={rooms}
+              cycles={cycles}
+              onOpenRoom={async (room) => {
+                setSelectedRoomId(room.id)
+                await loadRoomEntries(room, cycles, client)
+              }}
+            />
+          )}
+          <Footer
+            active={!supportRoom}
+            onOverview={() => {
+              setSelectedRoomId(null)
+              setEntryEditor(null)
+              setStartingCycle(false)
+            }}
+          />
+          {settingsSite ? (
+            <FacilitySettings
+              client={client}
+              site={settingsSite}
+              rooms={rooms.filter((room) => room.site_id === settingsSite.id)}
+              hidePin
+              onClose={() => setSettingsSite(null)}
+              onChange={(site, nextRooms) => {
+                setSettingsSite(site)
+                setSupportSite(site)
+                setRooms(nextRooms)
+              }}
+            />
+          ) : null}
+        </div>
+      )
+    }
+
+    if (adminView && !supportError) {
+      return (
+        <div className="app-shell admin-shell">
+          <Header admin support siteName="Owner view" onSites={exitSupportView} />
+          <div className="app-main loading-pane" role="status" aria-live="polite">
+            <div className="spinner" aria-hidden="true" />
+            <p className="lede">Opening owner dashboard…</p>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="app-shell admin-shell">
         <Header admin onSites={() => void signOut()} />
@@ -331,6 +467,11 @@ export default function App() {
           adminEmail={owner?.email ?? ''}
           onSignOut={() => void signOut()}
           onChangeConnection={openReconnect}
+          onViewAsOwner={(facility) => {
+            setSupportError(null)
+            goAdmin(facility.id)
+          }}
+          viewError={supportError}
         />
       </div>
     )

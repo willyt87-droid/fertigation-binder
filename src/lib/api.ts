@@ -157,6 +157,14 @@ export async function updateSite(
   return mapSite(requireData(data, error) as Record<string, unknown>)
 }
 
+export async function getSite(client: SupabaseClient, siteId: string): Promise<Site> {
+  const { data, error } = await client.from('sites').select(SITE_OWNER_COLUMNS).eq('id', siteId)
+  const rows = requireData(data, error) as Record<string, unknown>[]
+  const row = rows[0]
+  if (!row) throw new Error('Facility not found')
+  return mapSite(row)
+}
+
 export async function listAdminFacilities(client: SupabaseClient): Promise<AdminFacility[]> {
   const { data, error } = await client
     .from('admin_facility_queue')
