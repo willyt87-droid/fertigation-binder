@@ -2,9 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
-import { goPath, isAdminPath, isPlatformAdmin } from './lib/admin'
+import {
+  goPath,
+  goViewAsOwner,
+  isAdminPath,
+  isPlatformAdmin,
+  leaveViewAsOwner,
+  viewAsOwnerSiteId,
+} from './lib/admin'
 import { binderLoadErrorCopy } from './lib/authErrors'
 import {
+  getSite,
   listCycles,
   listEntries,
   listRooms,
@@ -19,6 +27,7 @@ import {
   loadSessionSiteId,
   saveSessionSiteId,
 } from './lib/storage'
+import { ViewAsOwnerBanner } from './components/ViewAsOwnerBanner'
 import { AdminDashboard } from './screens/AdminDashboard'
 import { ConfigScreen } from './screens/ConfigScreen'
 import { EntryForm } from './screens/EntryForm'
@@ -71,6 +80,9 @@ export default function App() {
   const [startingCycle, setStartingCycle] = useState(false)
   const [entryEditor, setEntryEditor] = useState<Entry | 'new' | null>(null)
   const [settingsSite, setSettingsSite] = useState<Site | null>(null)
+  const [viewAsOwner, setViewAsOwner] = useState<Site | null>(null)
+  const [viewError, setViewError] = useState<string | null>(null)
+  const [appHash, setAppHash] = useState(() => currentHash())
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId)
   const selectedCycle = selectedRoom
@@ -111,16 +123,21 @@ export default function App() {
     const admin = user ? await isPlatformAdmin(db, user) : false
     setIsAdmin(admin)
     if (admin) {
-      goPath('/admin')
       setAdminPath(true)
       setScreen('gate')
-      setSessionSite(null)
+      if (!isAdminPath()) {
+        const viewing = viewAsOwnerSiteId()
+        goPath(viewing ? `/admin#view=${encodeURIComponent(viewing)}` : '/admin')
+      }
     }
     return admin
   }, [])
 
   useEffect(() => {
-    const onPop = () => setAdminPath(isAdminPath())
+    const onPop = () => {
+      setAdminPath(isAdminPath())
+      setAppHash(currentHash())
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
@@ -128,6 +145,7 @@ export default function App() {
   useEffect(() => {
     const onHash = () => {
       const hash = currentHash()
+      setAppHash(hash)
       if (hash === 'signup') {
         setAuthIntent('signup')
         setScreen('owner-auth')
@@ -142,6 +160,41 @@ export default function App() {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
+
+  const openOwnerView = useCallback(
+    async (siteId: string, db: SupabaseClient) => {
+      setViewError(null)
+      const site = await getSite(db, siteId)
+      setViewAsOwner(site)
+      setSelectedRoomId(null)
+      setEntries([])
+      setSettingsSite(null)
+      setStartingCycle(false)
+      setEntryEditor(null)
+      await loadSiteData(site, db)
+      return site
+    },
+    [loadSiteData],
+  )
+
+  useEffect(() => {
+    if (!client || !isAdmin) return
+    const siteId = viewAsOwnerSiteId(appHash)
+    if (!siteId) {
+      if (viewAsOwner) setViewAsOwner(null)
+      return
+    }
+    if (viewAsOwner?.id === siteId) return
+    let cancelled = false
+    void openOwnerView(siteId, client).catch((err) => {
+      if (cancelled) return
+      setViewAsOwner(null)
+      setViewError(err instanceof Error ? err.message : 'Could not open owner dashboard')
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [appHash, client, isAdmin, openOwnerView, viewAsOwner])
 
   useEffect(() => {
     if (!client) return
@@ -206,13 +259,38 @@ export default function App() {
     setReconnect(false)
     setScreen('gate')
     if (isAdmin) {
-      goPath('/admin')
+      setViewAsOwner(null)
+      setViewError(null)
+      leaveViewAsOwner()
       setAdminPath(true)
     } else {
       goPath('/app')
       setAdminPath(false)
     }
     clearAppHash()
+  }
+
+  function startViewAsOwner(siteId: string) {
+    setViewError(null)
+    setViewAsOwner(null)
+    goViewAsOwner(siteId)
+    setAppHash(`view=${encodeURIComponent(siteId)}`)
+    setAdminPath(true)
+  }
+
+  function stopViewAsOwner() {
+    setViewAsOwner(null)
+    setViewError(null)
+    setSelectedRoomId(null)
+    setEntries([])
+    setRooms([])
+    setCycles([])
+    setSettingsSite(null)
+    setStartingCycle(false)
+    setEntryEditor(null)
+    leaveViewAsOwner()
+    setAppHash('')
+    setAdminPath(true)
   }
 
   function openOwnerSignIn() {
@@ -236,6 +314,7 @@ export default function App() {
   }
 
   async function handleStartCycle(startDate: string) {
+    if (viewAsOwner) return
     if (!client || !selectedRoom) return
     const cycle = await startCycle(client, { roomId: selectedRoom.id, startDate })
     const nextCycles = await listCycles(
@@ -249,6 +328,7 @@ export default function App() {
   }
 
   async function handleSaveEntry(draft: EntryDraft, id?: string) {
+    if (viewAsOwner) return
     if (!client || !selectedRoom || !sessionSite) return
     if (selectedRoom.type === 'flower' && selectedCycle && draft.date < selectedCycle.start_date) {
       throw new Error(`Date must be on or after cycle start (${selectedCycle.start_date}).`)
@@ -284,6 +364,8 @@ export default function App() {
     await client.auth.signOut()
     setOwner(null)
     setIsAdmin(false)
+    setViewAsOwner(null)
+    setViewError(null)
     setScreen('gate')
     goPath(adminPath ? '/admin' : '/app')
   }
@@ -322,15 +404,87 @@ export default function App() {
     )
   }
 
+  if (isAdmin && viewAsOwnerSiteId(appHash) && !viewError) {
+    if (!viewAsOwner) {
+      return (
+        <div className="app-shell">
+          <Header showSites={false} />
+          <div className="app-main loading-pane" role="status" aria-live="polite">
+            <div className="spinner" aria-hidden="true" />
+            <p className="lede">Opening owner dashboard…</p>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div className="app-shell">
+        <Header
+          siteName={viewAsOwner.name}
+          sitesLabel="ADMIN"
+          onSites={stopViewAsOwner}
+        />
+        <ViewAsOwnerBanner
+          facilityName={viewAsOwner.name}
+          onBack={stopViewAsOwner}
+          onSettings={() => setSettingsSite(viewAsOwner)}
+        />
+        {selectedRoom ? (
+          <RoomScreen
+            room={selectedRoom}
+            cycle={selectedCycle}
+            entries={entries}
+            targets={viewAsOwner.targets}
+            readOnly
+            onStartCycle={() => undefined}
+            onAddEntry={() => undefined}
+            onEditEntry={() => undefined}
+          />
+        ) : (
+          <OverviewScreen
+            rooms={rooms}
+            cycles={cycles}
+            onOpenRoom={async (room) => {
+              setSelectedRoomId(room.id)
+              await loadRoomEntries(room, cycles, client)
+            }}
+          />
+        )}
+        <Footer
+          active={!selectedRoom}
+          onOverview={() => {
+            setSelectedRoomId(null)
+            setEntryEditor(null)
+            setStartingCycle(false)
+          }}
+        />
+        {settingsSite ? (
+          <FacilitySettings
+            client={client}
+            site={settingsSite}
+            rooms={rooms.filter((room) => room.site_id === settingsSite.id)}
+            onClose={() => setSettingsSite(null)}
+            onChange={(site, nextRooms) => {
+              setSettingsSite(site)
+              setViewAsOwner(site)
+              setRooms(nextRooms)
+            }}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   if (isAdmin) {
     return (
       <div className="app-shell admin-shell">
         <Header admin onSites={() => void signOut()} />
+        {viewError ? <div className="error admin-view-error">{viewError}</div> : null}
         <AdminDashboard
           client={client}
           adminEmail={owner?.email ?? ''}
           onSignOut={() => void signOut()}
           onChangeConnection={openReconnect}
+          onViewAsOwner={(facility) => startViewAsOwner(facility.id)}
         />
       </div>
     )

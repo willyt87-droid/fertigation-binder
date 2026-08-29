@@ -7,9 +7,16 @@ type HeaderProps = {
   showSites?: boolean
   onSites?: () => void
   admin?: boolean
+  sitesLabel?: string
 }
 
-export function Header({ siteName, showSites = true, onSites, admin = false }: HeaderProps) {
+export function Header({
+  siteName,
+  showSites = true,
+  onSites,
+  admin = false,
+  sitesLabel,
+}: HeaderProps) {
   const [clock, setClock] = useState(() => clockLabel())
 
   useEffect(() => {
@@ -33,7 +40,7 @@ export function Header({ siteName, showSites = true, onSites, admin = false }: H
       </div>
       {showSites ? (
         <button type="button" className={admin ? 'sites-btn admin-chrome' : 'sites-btn'} onClick={onSites}>
-          {admin ? 'OUT' : 'SITES'}
+          {sitesLabel ?? (admin ? 'OUT' : 'SITES')}
         </button>
       ) : (
         <span />
