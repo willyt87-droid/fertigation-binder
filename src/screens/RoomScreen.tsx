@@ -13,6 +13,7 @@ type RoomScreenProps = {
   onStartCycle: () => void
   onAddEntry: () => void
   onEditEntry: (entry: Entry) => void
+  readOnly?: boolean
 }
 
 export function RoomScreen({
@@ -23,6 +24,7 @@ export function RoomScreen({
   onStartCycle,
   onAddEntry,
   onEditEntry,
+  readOnly = false,
 }: RoomScreenProps) {
   const flower = room.type === 'flower'
   const stage = cycle ? stageForCycle(cycle.start_date) : null
@@ -65,13 +67,17 @@ export function RoomScreen({
       {needsCycle ? (
         <div className="form-card stack" style={{ marginBottom: 14 }}>
           <p className="lede" style={{ marginBottom: 0 }}>
-            Flower rooms collect against the active cycle. Start a cycle to add entries.
+            {readOnly
+              ? 'Flower rooms collect against the active cycle. No cycle has been started yet.'
+              : 'Flower rooms collect against the active cycle. Start a cycle to add entries.'}
           </p>
-          <button type="button" className="btn btn-primary" onClick={onStartCycle}>
-            Start cycle
-          </button>
+          {readOnly ? null : (
+            <button type="button" className="btn btn-primary" onClick={onStartCycle}>
+              Start cycle
+            </button>
+          )}
         </div>
-      ) : (
+      ) : readOnly ? null : (
         <button type="button" className="btn btn-primary" style={{ width: '100%', marginBottom: 14 }} onClick={onAddEntry}>
           Add entry
         </button>
@@ -84,13 +90,8 @@ export function RoomScreen({
         {entries.map((entry) => {
           const ro = formatRoPct(entry.feed_ml, entry.runoff_ml)
           const color = entry.tech ? techColor(entry.tech) : null
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              className="entry-card"
-              onClick={() => onEditEntry(entry)}
-            >
+          const card = (
+            <>
               <div className="entry-top">
                 <div>
                   <div className="entry-id">
@@ -137,6 +138,20 @@ export function RoomScreen({
                   tone={toneForTarget(entry.runoff_ml, targets.binder.runoffMl)}
                 />
               </div>
+            </>
+          )
+          return readOnly ? (
+            <div key={entry.id} className="entry-card">
+              {card}
+            </div>
+          ) : (
+            <button
+              key={entry.id}
+              type="button"
+              className="entry-card"
+              onClick={() => onEditEntry(entry)}
+            >
+              {card}
             </button>
           )
         })}

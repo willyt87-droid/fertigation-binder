@@ -157,6 +157,24 @@ export async function updateSite(
   return mapSite(requireData(data, error) as Record<string, unknown>)
 }
 
+function sortAdminFacilities(rows: AdminFacility[]) {
+  return [...rows].sort((a, b) => {
+    const aDemo = a.name.trim().toLowerCase() === 'athena demo'
+    const bDemo = b.name.trim().toLowerCase() === 'athena demo'
+    if (aDemo !== bDemo) return aDemo ? -1 : 1
+    return String(b.created_at ?? '').localeCompare(String(a.created_at ?? ''))
+  })
+}
+
+export async function getSite(client: SupabaseClient, siteId: string): Promise<Site> {
+  const { data, error } = await client
+    .from('sites')
+    .select(SITE_OWNER_COLUMNS)
+    .eq('id', siteId)
+    .single()
+  return mapSite(requireData(data, error) as Record<string, unknown>)
+}
+
 export async function listAdminFacilities(client: SupabaseClient): Promise<AdminFacility[]> {
   const { data, error } = await client
     .from('admin_facility_queue')
@@ -165,20 +183,24 @@ export async function listAdminFacilities(client: SupabaseClient): Promise<Admin
     )
     .order('created_at', { ascending: false })
   if (!error) {
-    return requireData(data, error).map((row) => mapAdminFacility(row as Record<string, unknown>))
+    return sortAdminFacilities(
+      requireData(data, error).map((row) => mapAdminFacility(row as Record<string, unknown>)),
+    )
   }
   const sites = await listSites(client)
-  return sites.map((site) => ({
-    id: site.id,
-    name: site.name,
-    location: site.location,
-    status: site.status,
-    created_at: site.created_at,
-    owner_email: site.owner_email,
-    aroya_key_saved: site.aroya_key_saved,
-    room_count: 0,
-    last_activity: null,
-  }))
+  return sortAdminFacilities(
+    sites.map((site) => ({
+      id: site.id,
+      name: site.name,
+      location: site.location,
+      status: site.status,
+      created_at: site.created_at,
+      owner_email: site.owner_email,
+      aroya_key_saved: site.aroya_key_saved,
+      room_count: 0,
+      last_activity: null,
+    })),
+  )
 }
 
 export async function adminSetSiteStatus(

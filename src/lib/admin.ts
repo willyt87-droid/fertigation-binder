@@ -44,3 +44,24 @@ export function goPath(path: string) {
   window.history.pushState({}, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
+
+export function viewAsOwnerSiteId(hash = window.location.hash.replace(/^#/, '')) {
+  if (!hash.startsWith('view=')) return null
+  try {
+    const id = decodeURIComponent(hash.slice(5)).trim()
+    return id || null
+  } catch {
+    return null
+  }
+}
+
+export function goViewAsOwner(siteId: string) {
+  const next = `/admin#view=${encodeURIComponent(siteId)}`
+  window.history.pushState({}, '', next)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
+export function leaveViewAsOwner() {
+  window.history.pushState({}, '', '/admin')
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}

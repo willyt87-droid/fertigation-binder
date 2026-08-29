@@ -797,7 +797,7 @@ a.linkish:hover {
 
 .admin-meta {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin: 0;
 }
@@ -817,6 +817,47 @@ a.linkish:hover {
 }
 
 .admin-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.admin-actions .btn-primary {
+  grid-column: 1 / -1;
+}
+
+.admin-view-error {
+  margin: 12px 14px 0;
+}
+
+.view-as-owner-banner {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 19;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, #5c3d0a, #3d2806);
+  border-bottom: 3px solid var(--warn);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.view-as-owner-banner-copy {
+  margin: 0;
+  color: #ffe8a3;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.view-as-owner-banner-note {
+  margin: 0;
+  color: #f6d58a;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.view-as-owner-banner-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;

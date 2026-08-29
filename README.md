@@ -27,10 +27,10 @@ Floor techs do **not** need accounts.
 
 ### How WT logs in as admin
 
-1. Connect the app to an empty project that has all three migrations applied (see below).
+1. Connect the app to an empty project that has all migrations in `supabase/migrations/` applied (see below).
 2. Open **`/admin`**.
 3. Email a magic link from the operator sign-in screen. The first allowlisted address is **`willyt87@gmail.com`** (seeded in `platform_admins`). Extra operators: `INSERT` their email into `public.platform_admins` and/or set `VITE_PLATFORM_ADMIN_EMAILS` (comma-separated) so the client also routes them to `/admin`.
-4. After the link, WT sees the newcomers queue (empty until an owner creates a facility). Approve / pause / remove from here. Opening a facility is read-only (rooms, last activity, whether an AROYA key is saved — never the key).
+4. After the link, WT sees the newcomers queue (empty until an owner creates a facility). Approve / pause / remove from here. **View as owner** opens that grow’s owner dashboard on the operator session (rooms, cycles, targets, collections, settings) with a “Viewing as owner” banner. It is not the floor PIN path and does not write collections as a tech.
 
 If WT uses **Owner sign-in** on `/app` with an allowlisted email, the app skips onboarding and redirects to `/admin`.
 
@@ -74,6 +74,8 @@ Then paste `http://127.0.0.1:8787` and any anon key such as `local`. Use **Conti
    - [`supabase/migrations/20260829143600_init.sql`](supabase/migrations/20260829143600_init.sql)
    - [`supabase/migrations/20260829160000_owner_onboarding.sql`](supabase/migrations/20260829160000_owner_onboarding.sql)
    - [`supabase/migrations/20260829180000_platform_admin.sql`](supabase/migrations/20260829180000_platform_admin.sql)
+   - [`supabase/migrations/20260829210000_contact_requests.sql`](supabase/migrations/20260829210000_contact_requests.sql)
+   - [`supabase/migrations/20260829233000_operator_view_as_owner.sql`](supabase/migrations/20260829233000_operator_view_as_owner.sql)
 3. Authentication → Providers: Email enabled (magic link).
 4. Project Settings → API: copy the project URL and the **anon public** key (never the service_role key).
 5. Open **`/app#reconnect`** (operator only), paste URL + anon key, save. Admins go to `/admin`. Owners use **Start owner signup**, then create a facility.
@@ -84,19 +86,21 @@ If you use the CLI against this new project:
 supabase db query -f supabase/migrations/20260829143600_init.sql
 supabase db query -f supabase/migrations/20260829160000_owner_onboarding.sql
 supabase db query -f supabase/migrations/20260829180000_platform_admin.sql
+supabase db query -f supabase/migrations/20260829210000_contact_requests.sql
+supabase db query -f supabase/migrations/20260829233000_operator_view_as_owner.sql
 ```
 
 Do **not** apply these to the Ravena pilot project (`rbgzpwfozpuddtzlqkte`) or any other live database.
 
 The table shapes stay compatible with the pilot (`sites.id` is text; flower entries are filtered by `date >= cycle.start_date` and have **no** `cycle_id`). Compatibility is not a reason to share the pilot project.
 
-Row-level security after the admin migration: platform admins can `SELECT` every facility; owners only their own; floor (anon) only **active** facility cards. Status changes and kicks run as the admin session, not the owner.
+Row-level security: platform admins can `SELECT` every facility, room, cycle, and entry, and may edit facility/room settings. Owners only their own. Floor (anon) only **active** facility cards. A random owner cannot open another grow via view-as-owner. Status changes and kicks run as the admin session. Operators do not write floor collections.
 
 ## Using the binder
 
 1. **Connect** — public visitors use the product project. Operators paste URL + anon key only at `/app#reconnect`.
 2. **Owner** — **Start owner signup**, magic link, then wizard: facility (name, location, floor PIN) → rooms (optional) → targets. Status starts pending.
-3. **Admin** — `/admin` newcomers queue: owner email, name/location, created at, room count, status. Approve so floor PIN works; pause to lock it; remove to delete the grow.
+3. **Admin** — `/admin` newcomers queue: owner email, name/location, created at, room count, status, last collection. Approve so floor PIN works; pause to lock it; **View as owner** to inspect the same dashboard the owner sees after magic-link (pending grows included); remove to delete the grow.
 4. **SITES** — one card per facility the current role can see. Floor: tap card, enter PIN (active only). Owner: Settings on the card (works while pending).
 5. **Start owner signup** on the site gate opens the same owner-setup magic-link flow as `/app#signup`. **Owner sign-in** is for returning owners. The connection form and **Change connection** stay on `/admin` or `/app#reconnect` (operator only).
 6. Floor session lasts until **SITES**.

@@ -6,18 +6,18 @@ import {
   adminSetSiteStatus,
   listAdminFacilities,
   listContactRequests,
-  listRooms,
   type AdminFacility,
   type ContactRequest,
 } from '../lib/api'
 import { formatTimestamp } from '../lib/format'
-import type { Room, SiteStatus } from '../types'
+import type { SiteStatus } from '../types'
 
 type AdminDashboardProps = {
   client: SupabaseClient
   adminEmail: string
   onSignOut: () => void
   onChangeConnection?: () => void
+  onViewAsOwner: (facility: AdminFacility) => void
 }
 
 export function AdminDashboard({
@@ -25,13 +25,12 @@ export function AdminDashboard({
   adminEmail,
   onSignOut,
   onChangeConnection,
+  onViewAsOwner,
 }: AdminDashboardProps) {
   const [queue, setQueue] = useState<AdminFacility[]>([])
   const [asks, setAsks] = useState<ContactRequest[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [open, setOpen] = useState<AdminFacility | null>(null)
-  const [openRooms, setOpenRooms] = useState<Room[]>([])
   const [confirmKick, setConfirmKick] = useState<AdminFacility | null>(null)
 
   const refresh = useCallback(async () => {
@@ -58,22 +57,10 @@ export function AdminDashboard({
     try {
       await adminSetSiteStatus(client, facility.id, status)
       await refresh()
-      setOpen((current) => (current?.id === facility.id ? { ...current, status } : current))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update status')
     } finally {
       setBusyId(null)
-    }
-  }
-
-  async function openFacility(facility: AdminFacility) {
-    setError(null)
-    setOpen(facility)
-    try {
-      setOpenRooms(await listRooms(client, facility.id))
-    } catch (err) {
-      setOpenRooms([])
-      setError(err instanceof Error ? err.message : 'Could not load rooms')
     }
   }
 
@@ -83,7 +70,6 @@ export function AdminDashboard({
     try {
       await adminDeleteSite(client, facility.id)
       setConfirmKick(null)
-      setOpen(null)
       await refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not remove facility')
@@ -98,8 +84,8 @@ export function AdminDashboard({
       <div className="admin-hero">
         <h1>Newcomers</h1>
         <p className="lede">
-          {adminEmail} · operator console. Approve facilities before floor PIN unlock. You are not a
-          facility owner — no onboarding here.
+          {adminEmail} · operator console. Approve facilities before floor PIN unlock. View as owner
+          opens that grow’s dashboard on your operator session — not the floor PIN path.
         </p>
       </div>
 
@@ -166,11 +152,23 @@ export function AdminDashboard({
                   <dt>Rooms</dt>
                   <dd>{facility.room_count}</dd>
                 </div>
+                <div>
+                  <dt>Last collection</dt>
+                  <dd>{formatTimestamp(facility.last_activity)}</dd>
+                </div>
               </dl>
               <div className="admin-actions">
                 <button
                   type="button"
                   className="btn btn-primary"
+                  disabled={busyId === facility.id}
+                  onClick={() => onViewAsOwner(facility)}
+                >
+                  View as owner
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
                   disabled={busyId === facility.id || facility.status === 'active'}
                   onClick={() => void setStatus(facility, 'active')}
                 >
@@ -183,14 +181,6 @@ export function AdminDashboard({
                   onClick={() => void setStatus(facility, 'paused')}
                 >
                   Pause
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={busyId === facility.id}
-                  onClick={() => void openFacility(facility)}
-                >
-                  Open
                 </button>
                 <button
                   type="button"
@@ -223,53 +213,6 @@ export function AdminDashboard({
           </>
         ) : null}
       </p>
-
-      {open ? (
-        <Sheet
-          title={`Facility · ${open.name}`}
-          onClose={() => {
-            setOpen(null)
-            setOpenRooms([])
-          }}
-        >
-          <p className="lede">Read-only. Status changes happen on the queue — no owner impersonation.</p>
-          <div className="stack">
-            <div className="card">
-              <div className="quiet">Owner</div>
-              <b>{open.owner_email || '—'}</b>
-              <div className="quiet" style={{ marginTop: 8 }}>
-                {open.location || 'No location'} · {formatTimestamp(open.created_at)}
-              </div>
-              <div style={{ marginTop: 10 }}>
-                <span className={`chip status-${open.status}`}>{open.status}</span>
-              </div>
-            </div>
-            <div className="card">
-              <p className="kicker">AROYA</p>
-              <p className={open.aroya_key_saved ? 'ok-note' : 'quiet'} style={{ margin: 0 }}>
-                {open.aroya_key_saved ? 'Key saved (value not shown)' : 'No key saved'}
-              </p>
-            </div>
-            <div className="card">
-              <p className="kicker">Last activity</p>
-              <p style={{ margin: 0 }}>{formatTimestamp(open.last_activity)}</p>
-            </div>
-            <p className="kicker">Rooms</p>
-            {openRooms.length === 0 ? (
-              <div className="empty-slot">No rooms yet.</div>
-            ) : (
-              openRooms.map((room) => (
-                <div key={room.id} className="card">
-                  <b>{room.name}</b>
-                  <div className="quiet">
-                    {room.type} · {room.max_zones} zones
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </Sheet>
-      ) : null}
 
       {confirmKick ? (
         <Sheet title="Remove facility" onClose={() => setConfirmKick(null)}>

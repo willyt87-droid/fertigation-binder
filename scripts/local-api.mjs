@@ -18,8 +18,66 @@ const admins = new Set([SEEDED_ADMIN, ...extraAdmins])
 const sites = new Map()
 /** @type {Map<string, object>} */
 const rooms = new Map()
+/** @type {Map<string, object>} */
+const cycles = new Map()
+/** @type {Map<string, object>} */
+const entries = new Map()
 /** @type {object[]} */
 const contactRequests = []
+
+function seedAthenaDemo() {
+  const created = '2026-08-29T18:31:34.026Z'
+  sites.set('athena-demo', {
+    id: 'athena-demo',
+    name: 'Athena Demo',
+    location: 'NY',
+    targets: {},
+    aroya_facility_id: null,
+    owner_id: userIdFor('mock-owner@fertigationbinder.demo'),
+    owner_email: 'mock-owner@fertigationbinder.demo',
+    pin_hash: 'local-demo-pin',
+    status: 'active',
+    created_at: created,
+    aroya_key_saved: false,
+  })
+  for (let i = 1; i <= 10; i += 1) {
+    const roomId = `athena-demo-flower-${String(i).padStart(2, '0')}`
+    rooms.set(roomId, {
+      id: roomId,
+      site_id: 'athena-demo',
+      name: `Flower ${String(i).padStart(2, '0')}`,
+      type: 'flower',
+      max_zones: 8,
+      sort_order: i,
+      aroya_room_id: null,
+    })
+    const cycleId = randomUUID()
+    cycles.set(cycleId, {
+      id: cycleId,
+      room_id: roomId,
+      number: 1,
+      start_date: '2026-08-29',
+      status: 'in_progress',
+    })
+    const entryId = randomUUID()
+    entries.set(entryId, {
+      id: entryId,
+      room_id: roomId,
+      date: '2026-08-29',
+      zone: 1,
+      cultivar: null,
+      feed_ml: 2200,
+      feed_ec: 2.4,
+      feed_ph: 5.9,
+      runoff_ml: 440,
+      runoff_ec: 2.6,
+      runoff_ph: 6.1,
+      notes: 'Demo collection',
+      created_at: created,
+      tech: 'WT',
+    })
+  }
+}
 
 function json(res, status, body, extra = {}) {
   const payload = JSON.stringify(body)
@@ -117,7 +175,11 @@ function sitePublic(site, authed) {
 }
 
 function queueRow(site) {
-  const roomCount = [...rooms.values()].filter((room) => room.site_id === site.id).length
+  const siteRooms = [...rooms.values()].filter((room) => room.site_id === site.id)
+  const roomIds = new Set(siteRooms.map((room) => room.id))
+  const last = [...entries.values()]
+    .filter((entry) => roomIds.has(entry.room_id))
+    .reduce((max, entry) => (entry.created_at > max ? entry.created_at : max), '')
   return {
     id: site.id,
     name: site.name,
@@ -126,15 +188,33 @@ function queueRow(site) {
     created_at: site.created_at,
     owner_email: site.owner_email,
     aroya_key_saved: site.aroya_key_saved,
-    room_count: roomCount,
-    last_activity: null,
+    room_count: siteRooms.length,
+    last_activity: last || null,
   }
 }
 
 function eqParam(url, column) {
   const value = url.searchParams.get(column)
   if (!value) return null
-  return String(value).replace(/^eq\./, '')
+  const raw = String(value)
+  if (raw.startsWith('eq.')) return raw.slice(3)
+  return raw
+}
+
+function inParam(url, column) {
+  const value = url.searchParams.get(column)
+  if (!value) return null
+  const raw = String(value)
+  if (!raw.startsWith('in.(') || !raw.endsWith(')')) return null
+  return raw
+    .slice(4, -1)
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+function wantsSingle(req) {
+  return String(req.headers.accept || '').includes('application/vnd.pgrst.object+json')
 }
 
 function visibleSites(auth) {
@@ -270,7 +350,17 @@ const server = http.createServer(async (req, res) => {
 
   if (path === '/rest/v1/sites') {
     if (req.method === 'GET') {
-      const rows = visibleSites(auth).map((site) => sitePublic(site, Boolean(auth)))
+      const id = eqParam(url, 'id')
+      let rows = visibleSites(auth).map((site) => sitePublic(site, Boolean(auth)))
+      if (id) rows = rows.filter((site) => site.id === id)
+      if (wantsSingle(req)) {
+        if (!rows[0]) {
+          json(res, 406, { message: 'JSON object requested, multiple (or no) rows returned' })
+          return
+        }
+        json(res, 200, rows[0], { 'Content-Type': 'application/vnd.pgrst.object+json' })
+        return
+      }
       json(res, 200, rows)
       return
     }
@@ -299,7 +389,25 @@ const server = http.createServer(async (req, res) => {
       })
       return
     }
-    if (req.method === 'PATCH' || req.method === 'DELETE') {
+    if (req.method === 'PATCH') {
+      const id = eqParam(url, 'id')
+      const site = id ? sites.get(id) : null
+      if (!site) {
+        json(res, 404, { message: 'Not found' })
+        return
+      }
+      if (!auth || (!isAdmin(auth.email) && site.owner_id !== auth.sub)) {
+        json(res, 401, { message: 'Not allowed' })
+        return
+      }
+      const body = await readBody(req)
+      Object.assign(site, body)
+      json(res, 200, sitePublic(site, true), {
+        'Content-Type': 'application/vnd.pgrst.object+json',
+      })
+      return
+    }
+    if (req.method === 'DELETE') {
       json(res, 200, {})
       return
     }
@@ -329,8 +437,34 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (path === '/rest/v1/cycles' && req.method === 'GET') {
+    const ids = inParam(url, 'room_id')
+    const roomId = eqParam(url, 'room_id')
+    const rows = [...cycles.values()].filter((cycle) => {
+      if (ids) return ids.includes(cycle.room_id)
+      if (roomId) return cycle.room_id === roomId
+      return true
+    })
+    json(res, 200, rows)
+    return
+  }
+
+  if (path === '/rest/v1/entries' && req.method === 'GET') {
+    const roomId = eqParam(url, 'room_id')
+    const since = String(url.searchParams.get('date') || '').replace(/^gte\./, '')
+    const rows = [...entries.values()].filter((entry) => {
+      if (roomId && entry.room_id !== roomId) return false
+      if (since && entry.date < since) return false
+      return true
+    })
+    json(res, 200, rows)
+    return
+  }
+
   json(res, 404, { message: `No mock for ${req.method} ${path}` })
 })
+
+seedAthenaDemo()
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`Local binder API on http://127.0.0.1:${PORT}`)
