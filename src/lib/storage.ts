@@ -70,3 +70,23 @@ export function saveSessionSiteId(siteId: string) {
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY)
 }
+
+export function loadLastRoomId(siteId: string) {
+  return localStorage.getItem(`${PREFIX}:lastRoom:${siteId}`)
+}
+
+export function saveLastRoomId(siteId: string, roomId: string) {
+  localStorage.setItem(`${PREFIX}:lastRoom:${siteId}`, roomId)
+}
+
+const LAST_TECH_KEY = `${PREFIX}:lastTech`
+
+export function loadLastTech() {
+  return localStorage.getItem(LAST_TECH_KEY)
+}
+
+export function saveLastTech(tech: string) {
+  const value = tech.trim().toUpperCase()
+  if (!value) return
+  localStorage.setItem(LAST_TECH_KEY, value)
+}

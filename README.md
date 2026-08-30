@@ -2,7 +2,7 @@
 
 Independent **product clone** of a greenhouse-tablet fertigation binder. This repository is **not** the live pilot and must not be pointed at the pilot database.
 
-v1 is a mobile-first PWA: owner onboarding, facility cards, floor PIN logging, flower cycles, and feed/runoff collections. It starts with **empty data** for any grow — no pre-seeded rooms, entries, or customer name. The product operator (WT) is a platform admin, not a facility owner.
+v1 is a mobile-first PWA: owner onboarding, facility cards, floor PIN logging, flower cycles, feed/runoff collections, a room log table, and a cycle chart. It starts with **empty data** for any grow — no pre-seeded rooms, entries, or customer name. The product operator (WT) is a platform admin, not a facility owner.
 
 ## What this is vs the pilot
 
@@ -13,7 +13,7 @@ v1 is a mobile-first PWA: owner onboarding, facility cards, floor PIN logging, f
 | Branding | The Fertigation Binder (droplet) | Do not copy operator branding |
 | First run | Owner sets up facilities; floor uses PIN after admin approval | Already has production data |
 
-v1 does **not** include Service/PM, Vitalite Cubes, Archive/CSV, calculators, charts, live AROYA pulls, billing, or Curaleaf-specific flows.
+v1 does **not** include Service/IPM, Vitalite Cubes, Archive/CSV, calculators, live AROYA pulls, billing, or House. Binder log charts (feed/runoff pH, EC, and volumes over the cycle) are in the room log.
 
 ## Auth model
 
@@ -65,7 +65,7 @@ Optional local stub (no Supabase project) for UI checks:
 node scripts/local-api.mjs
 ```
 
-Then paste `http://127.0.0.1:8787` and any anon key such as `local`. Use **Continue on local mock** on the sign-in screens (`willyt87@gmail.com` → `/admin` empty queue; any other email → owner wizard).
+Then paste `http://127.0.0.1:8787` and any anon key such as `local`. Use **Continue on local mock** on the sign-in screens (`willyt87@gmail.com` → `/admin` empty queue; any other email → owner wizard). Athena Demo floor PIN on the stub is **1234**.
 
 ## Create an empty Supabase project
 
@@ -104,9 +104,9 @@ Row-level security: platform admins can `SELECT` every facility, room, cycle, an
 4. **SITES** — one card per facility the current role can see. Floor: tap card, enter PIN (active only). Owner: Settings on the card (works while pending).
 5. **Start owner signup** on the site gate opens the same owner-setup magic-link flow as `/app#signup`. **Owner sign-in** is for returning owners. The connection form and **Change connection** stay on `/admin` or `/app#reconnect` (operator only).
 6. Floor session lasts until **SITES**.
-7. **Overview** — Flower and Mom/Veg groups. Room add/remove/reorder is owner settings, not the floor tablet.
+7. **Overview** — Flower and Mom/Veg groups. Room add/remove/reorder is owner settings, not the floor tablet. Floor PIN path: one **Quick log** control and a **Log** control on each room card both open the **same overlay sheet** (room name on the sheet; one at a time). Operator view-as-owner is read-only — no quick entry and no Add entry.
 8. **Flower rooms** — start a cycle. Stage: Early 1–21 (green), Mid Bulk 22–42 (blue), Late 43+ (purple).
-9. **Room page** — active-cycle entries. Add/edit: date, zone, cultivar, feed mL/pH/EC, runoff mL/pH/EC, tech initials, notes. Target chips for substrate/irrigation when those ranges are set.
+9. **Room page** — tap a room card for the active-cycle **chart** (feed/RO pH and EC over date; toggle volumes) above a **column log** (date, zone, cultivar if present, feed mL/pH/EC, runoff mL/pH/EC, tech, notes). Newest first. Out-of-band cells use the facility target bands. Floor/owner can still Add/edit; view-as-owner is the same log, read-only.
 
 Default logging bands (editable per facility, never constants in the UI): feed pH 5.8–6.2, RO pH 5.3–6.3, feed mL Early 1800–2880 / Mid 2100–4680 / Late 2100–3800. RO% = runoff / feed × 100. Green in range, orange high, red low. Substrate defaults (typical, not a rule): field capacity 45–65% coco, dryback 15–25%.
 
