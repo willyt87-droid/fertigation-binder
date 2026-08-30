@@ -89,13 +89,14 @@ export function RoomScreen({
 
       {needsCycle ? null : (
         <>
-          <Suspense fallback={<div className="log-chart skeleton-card" aria-hidden="true" />}>
+          <Suspense fallback={<div className="log-chart skeleton-card short" aria-hidden="true" />}>
             <RoomLogChart entries={entries} />
           </Suspense>
           <RoomLogTable
             entries={entries}
             cycle={cycle}
             targets={targets}
+            maxZones={room.max_zones}
             readOnly={readOnly}
             onEditEntry={onEditEntry}
           />

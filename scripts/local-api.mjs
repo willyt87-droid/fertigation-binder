@@ -30,12 +30,6 @@ function hashPinSync(pin) {
   return createHash('sha256').update(`fertigation-binder:pin:${pin}`).digest('hex')
 }
 
-function isoAdd(iso, days) {
-  const date = new Date(`${iso}T00:00:00Z`)
-  date.setUTCDate(date.getUTCDate() + days)
-  return date.toISOString().slice(0, 10)
-}
-
 function seedAthenaDemo() {
   const created = '2026-08-29T18:31:34.026Z'
   const start = '2026-08-29'
@@ -52,14 +46,28 @@ function seedAthenaDemo() {
     created_at: created,
     aroya_key_saved: false,
   })
+  /** Mirrors product DB Athena Demo day-1 collections (zone 1, tech AD). Do not invent extra days. */
+  const day1 = [
+    { feed_ml: 312, feed_ph: 6, feed_ec: 2.3, runoff_ml: 31, runoff_ph: 6.1, runoff_ec: 2.4 },
+    { feed_ml: 298, feed_ph: 5.9, feed_ec: 2.3, runoff_ml: 27, runoff_ph: 6, runoff_ec: 2.3 },
+    { feed_ml: 335, feed_ph: 6.1, feed_ec: 2.3, runoff_ml: 37, runoff_ph: 6.2, runoff_ec: 2.5 },
+    { feed_ml: 287, feed_ph: 5.8, feed_ec: 2.3, runoff_ml: 23, runoff_ph: 5.9, runoff_ec: 2.4 },
+    { feed_ml: 348, feed_ph: 6, feed_ec: 2.3, runoff_ml: 42, runoff_ph: 6.2, runoff_ec: 2.3 },
+    { feed_ml: 321, feed_ph: 6.2, feed_ec: 2.3, runoff_ml: 32, runoff_ph: 6.3, runoff_ec: 2.4 },
+    { feed_ml: 305, feed_ph: 5.9, feed_ec: 2.3, runoff_ml: 27, runoff_ph: 6, runoff_ec: 2.5 },
+    { feed_ml: 356, feed_ph: 6.1, feed_ec: 2.3, runoff_ml: 39, runoff_ph: 6.2, runoff_ec: 2.4 },
+    { feed_ml: 290, feed_ph: 6, feed_ec: 2.3, runoff_ml: 23, runoff_ph: 6.1, runoff_ec: 2.3 },
+    { feed_ml: 328, feed_ph: 5.8, feed_ec: 2.3, runoff_ml: 33, runoff_ph: 5.9, runoff_ec: 2.4 },
+  ]
   for (let i = 1; i <= 10; i += 1) {
     const roomId = `athena-demo-flower-${String(i).padStart(2, '0')}`
+    const sample = day1[i - 1]
     rooms.set(roomId, {
       id: roomId,
       site_id: 'athena-demo',
       name: `Flower ${String(i).padStart(2, '0')}`,
       type: 'flower',
-      max_zones: 8,
+      max_zones: 1,
       sort_order: i,
       aroya_room_id: null,
     })
@@ -71,25 +79,18 @@ function seedAthenaDemo() {
       start_date: start,
       status: 'in_progress',
     })
-    for (let day = 0; day < 7; day += 1) {
-      const entryId = randomUUID()
-      entries.set(entryId, {
-        id: entryId,
-        room_id: roomId,
-        date: isoAdd(start, day),
-        zone: 1,
-        cultivar: null,
-        feed_ml: 2200 + day * 40 + i * 6,
-        feed_ec: Number((2.4 + day * 0.05).toFixed(2)),
-        feed_ph: Number((5.9 + (day % 3) * 0.1).toFixed(1)),
-        runoff_ml: 440 + day * 10,
-        runoff_ec: Number((2.6 + day * 0.04).toFixed(2)),
-        runoff_ph: Number((6.1 + (day % 2) * 0.1).toFixed(1)),
-        notes: day === 0 ? 'Demo collection' : null,
-        created_at: created,
-        tech: 'WT',
-      })
-    }
+    const entryId = randomUUID()
+    entries.set(entryId, {
+      id: entryId,
+      room_id: roomId,
+      date: start,
+      zone: 1,
+      cultivar: null,
+      ...sample,
+      notes: null,
+      created_at: created,
+      tech: 'AD',
+    })
   }
 }
 
@@ -513,12 +514,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       const body = await readBody(req)
       const row = {
+        ...body,
         id: body.id || randomUUID(),
         created_at: body.created_at || new Date().toISOString(),
         cultivar: body.cultivar ?? null,
         notes: body.notes ?? null,
         tech: body.tech ?? null,
-        ...body,
       }
       entries.set(row.id, row)
       json(res, 201, row, { 'Content-Type': 'application/vnd.pgrst.object+json' })

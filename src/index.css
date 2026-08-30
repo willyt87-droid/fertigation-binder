@@ -995,13 +995,9 @@ a.linkish:hover {
   }
 }
 
-.quick-entry {
-  margin-bottom: 16px;
-}
-
-.quick-entry-title {
-  margin: 0 0 4px;
-  font-size: 20px;
+.quick-log-launch {
+  width: 100%;
+  margin-bottom: 14px;
 }
 
 .quick-entry-fields {
@@ -1011,7 +1007,7 @@ a.linkish:hover {
 
 .quick-entry-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
@@ -1020,33 +1016,38 @@ a.linkish:hover {
 }
 
 .log-chart-card {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .log-chart-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .log-chart-head .segmented {
   flex: none;
-  min-width: 180px;
+  min-width: 160px;
+}
+
+.log-chart-head .segmented button {
+  min-height: 36px;
+  font-size: 12px;
 }
 
 .log-chart {
   position: relative;
-  height: 220px;
-  padding: 8px 8px 4px;
-  border-radius: 16px;
+  height: 128px;
+  padding: 4px 6px 2px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--panel);
 }
 
 .chart-empty {
-  min-height: 120px;
+  min-height: 72px;
 }
 
 .log-table-wrap {
@@ -1146,6 +1147,6 @@ a.linkish:hover {
   }
 
   .log-chart {
-    height: 200px;
+    height: 120px;
   }
 }

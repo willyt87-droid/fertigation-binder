@@ -2,8 +2,7 @@ import { useState } from 'react'
 import type { Cycle, EntryDraft, Room } from '../types'
 import { stageForCycle } from '../lib/bands'
 import { roomCanCollect } from '../lib/quickEntry'
-import { Sheet } from '../components/Sheet'
-import { QuickEntryForm } from './QuickEntryForm'
+import { QuickEntrySheet } from './QuickEntrySheet'
 
 type OverviewScreenProps = {
   rooms: Room[]
@@ -14,6 +13,8 @@ type OverviewScreenProps = {
   onSaveQuickEntry?: (room: Room, draft: EntryDraft) => Promise<void>
   onRememberRoom?: (roomId: string) => void
 }
+
+type LogTarget = 'overview' | Room
 
 export function OverviewScreen({
   rooms,
@@ -26,25 +27,18 @@ export function OverviewScreen({
 }: OverviewScreenProps) {
   const flower = rooms.filter((r) => r.type === 'flower')
   const momVeg = rooms.filter((r) => r.type === 'mom' || r.type === 'veg')
-  const [cardLog, setCardLog] = useState<Room | null>(null)
+  const [logTarget, setLogTarget] = useState<LogTarget | null>(null)
 
   return (
     <div className="app-main">
       {canWrite && onSaveQuickEntry ? (
-        <section className="form-card quick-entry" aria-label="Quick log">
-          <p className="kicker">Quick log</p>
-          <h2 className="quick-entry-title">Log a collection</h2>
-          <p className="quiet" style={{ marginBottom: 12 }}>
-            Zone, volumes, pH, EC, initials. Tap a room card to open the chart and log.
-          </p>
-          <QuickEntryForm
-            rooms={rooms}
-            cycles={cycles}
-            defaultRoomId={defaultRoomId}
-            onSave={onSaveQuickEntry}
-            onRoomChange={onRememberRoom}
-          />
-        </section>
+        <button
+          type="button"
+          className="btn btn-primary quick-log-launch"
+          onClick={() => setLogTarget('overview')}
+        >
+          Quick log
+        </button>
       ) : null}
       <RoomGroup
         title="Flower"
@@ -53,7 +47,7 @@ export function OverviewScreen({
         cycles={cycles}
         canWrite={canWrite}
         onOpenRoom={onOpenRoom}
-        onQuickLog={canWrite ? setCardLog : undefined}
+        onQuickLog={canWrite ? setLogTarget : undefined}
       />
       <RoomGroup
         title="Mom / Veg"
@@ -62,20 +56,18 @@ export function OverviewScreen({
         cycles={cycles}
         canWrite={canWrite}
         onOpenRoom={onOpenRoom}
-        onQuickLog={canWrite ? setCardLog : undefined}
+        onQuickLog={canWrite ? setLogTarget : undefined}
       />
-      {cardLog && onSaveQuickEntry ? (
-        <Sheet title={`Log · ${cardLog.name}`} onClose={() => setCardLog(null)}>
-          <QuickEntryForm
-            rooms={rooms}
-            cycles={cycles}
-            lockedRoom={cardLog}
-            onSave={async (room, draft) => {
-              await onSaveQuickEntry(room, draft)
-              setCardLog(null)
-            }}
-          />
-        </Sheet>
+      {logTarget && onSaveQuickEntry ? (
+        <QuickEntrySheet
+          rooms={rooms}
+          cycles={cycles}
+          defaultRoomId={logTarget === 'overview' ? defaultRoomId : logTarget.id}
+          lockedRoom={logTarget === 'overview' ? undefined : logTarget}
+          onClose={() => setLogTarget(null)}
+          onSave={onSaveQuickEntry}
+          onRoomChange={onRememberRoom}
+        />
       ) : null}
     </div>
   )

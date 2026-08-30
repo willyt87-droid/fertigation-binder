@@ -8,6 +8,7 @@ type RoomLogTableProps = {
   entries: Entry[]
   cycle: Cycle | undefined
   targets: FacilityTargets
+  maxZones?: number
   readOnly?: boolean
   onEditEntry: (entry: Entry) => void
 }
@@ -16,10 +17,12 @@ export function RoomLogTable({
   entries,
   cycle,
   targets,
+  maxZones = 8,
   readOnly = false,
   onEditEntry,
 }: RoomLogTableProps) {
   const showCultivar = entries.some((entry) => Boolean(entry.cultivar))
+  const showZone = maxZones > 1
   const stageKey = cycle ? stageForCycle(cycle.start_date).key : null
 
   if (entries.length === 0) {
@@ -32,7 +35,7 @@ export function RoomLogTable({
         <thead>
           <tr>
             <th>Date</th>
-            <th>Zone</th>
+            {showZone ? <th>Zone</th> : null}
             {showCultivar ? <th>Cultivar</th> : null}
             <th>Feed mL</th>
             <th>Feed pH</th>
@@ -49,7 +52,7 @@ export function RoomLogTable({
             const row = (
               <>
                 <td>{formatDate(entry.date)}</td>
-                <td>Z{entry.zone}</td>
+                {showZone ? <td>Z{entry.zone}</td> : null}
                 {showCultivar ? <td>{entry.cultivar || '—'}</td> : null}
                 <td className={`num tone-${feedMlTone(entry.feed_ml, stageKey, targets)}`}>
                   {formatMl(entry.feed_ml)}

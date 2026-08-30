@@ -42,6 +42,7 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
     if (!canvas || empty) return
 
     const labels = days.map((day) => formatDate(day.date))
+    const lone = days.length === 1
     const chart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -49,14 +50,14 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
         datasets:
           mode === 'chem'
             ? [
-                line('Feed EC', days.map((d) => d.feed_ec), '#22d3ee', 'y1'),
-                line('RO EC', days.map((d) => d.runoff_ec), '#0284c7', 'y1'),
-                line('Feed pH', days.map((d) => d.feed_ph), '#22c573', 'y'),
-                line('RO pH', days.map((d) => d.runoff_ph), '#9b84ff', 'y'),
+                line('Feed EC', days.map((d) => d.feed_ec), '#22d3ee', 'y1', lone),
+                line('RO EC', days.map((d) => d.runoff_ec), '#0284c7', 'y1', lone),
+                line('Feed pH', days.map((d) => d.feed_ph), '#22c573', 'y', lone),
+                line('RO pH', days.map((d) => d.runoff_ph), '#9b84ff', 'y', lone),
               ]
             : [
-                line('Feed mL', days.map((d) => d.feed_ml), '#e5a00d', 'y'),
-                line('RO mL', days.map((d) => d.runoff_ml), '#ef5350', 'y'),
+                line('Feed mL', days.map((d) => d.feed_ml), '#e5a00d', 'y', lone),
+                line('RO mL', days.map((d) => d.runoff_ml), '#ef5350', 'y', lone),
               ],
       },
       options: {
@@ -65,9 +66,10 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
         animation: false,
         interaction: { mode: 'index', intersect: false },
         events: ['mousemove', 'mouseout', 'click', 'touchend'],
+        layout: { padding: { top: 4, right: 6, bottom: 0, left: 2 } },
         plugins: {
           legend: {
-            labels: { color: INK, boxWidth: 10, font: { size: 11, weight: 700 } },
+            labels: { color: INK, boxWidth: 8, boxHeight: 8, font: { size: 10, weight: 700 }, padding: 8 },
           },
           tooltip: {
             backgroundColor: '#10261c',
@@ -79,18 +81,20 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
         },
         scales: {
           x: {
-            ticks: { color: MUTED, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+            offset: true,
+            ticks: { color: MUTED, maxRotation: 0, autoSkip: true, maxTicksLimit: 6, font: { size: 10 } },
             grid: { color: GRID },
           },
           y: {
             position: 'left',
             suggestedMin: mode === 'chem' ? 5 : undefined,
             suggestedMax: mode === 'chem' ? 7 : undefined,
-            ticks: { color: mode === 'chem' ? '#22c573' : MUTED },
+            ticks: { color: mode === 'chem' ? '#22c573' : MUTED, font: { size: 10 } },
             title: {
               display: true,
               text: mode === 'chem' ? 'pH' : 'mL',
               color: mode === 'chem' ? '#22c573' : MUTED,
+              font: { size: 10, weight: 700 },
             },
             grid: { color: GRID },
           },
@@ -99,8 +103,8 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
                 y1: {
                   position: 'right' as const,
                   suggestedMin: 0,
-                  ticks: { color: '#22d3ee' },
-                  title: { display: true, text: 'EC', color: '#22d3ee' },
+                  ticks: { color: '#22d3ee', font: { size: 10 } },
+                  title: { display: true, text: 'EC', color: '#22d3ee', font: { size: 10, weight: 700 } },
                   grid: { drawOnChartArea: false },
                 },
               }
@@ -145,6 +149,7 @@ function line(
   data: Array<number | null>,
   color: string,
   yAxisID: 'y' | 'y1',
+  lone: boolean,
 ) {
   return {
     label,
@@ -155,8 +160,8 @@ function line(
     pointBackgroundColor: color,
     pointBorderColor: color,
     borderWidth: 2,
-    pointRadius: 4,
-    pointHoverRadius: 6,
+    pointRadius: lone ? 7 : 4,
+    pointHoverRadius: lone ? 8 : 6,
     spanGaps: true,
     tension: 0.15,
   }

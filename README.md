@@ -104,7 +104,7 @@ Row-level security: platform admins can `SELECT` every facility, room, cycle, an
 4. **SITES** — one card per facility the current role can see. Floor: tap card, enter PIN (active only). Owner: Settings on the card (works while pending).
 5. **Start owner signup** on the site gate opens the same owner-setup magic-link flow as `/app#signup`. **Owner sign-in** is for returning owners. The connection form and **Change connection** stay on `/admin` or `/app#reconnect` (operator only).
 6. Floor session lasts until **SITES**.
-7. **Overview** — Flower and Mom/Veg groups. Room add/remove/reorder is owner settings, not the floor tablet. Floor (and a signed-in owner who unlocked with the PIN) can log from a page-level quick entry or a **Log** control on each room card. Operator view-as-owner is read-only — no quick entry and no Add entry.
+7. **Overview** — Flower and Mom/Veg groups. Room add/remove/reorder is owner settings, not the floor tablet. Floor PIN path: one **Quick log** control and a **Log** control on each room card both open the **same overlay sheet** (room name on the sheet; one at a time). Operator view-as-owner is read-only — no quick entry and no Add entry.
 8. **Flower rooms** — start a cycle. Stage: Early 1–21 (green), Mid Bulk 22–42 (blue), Late 43+ (purple).
 9. **Room page** — tap a room card for the active-cycle **chart** (feed/RO pH and EC over date; toggle volumes) above a **column log** (date, zone, cultivar if present, feed mL/pH/EC, runoff mL/pH/EC, tech, notes). Newest first. Out-of-band cells use the facility target bands. Floor/owner can still Add/edit; view-as-owner is the same log, read-only.
 
