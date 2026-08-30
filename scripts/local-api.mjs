@@ -2,6 +2,7 @@
 /**
  * Local Gotrue + PostgREST stub for owner vs platform-admin UI checks.
  * Do not point this at a live project. Start: node scripts/local-api.mjs
+ * Athena Demo floor PIN is 1234.
  */
 import http from 'node:http'
 import { createHash, randomUUID } from 'node:crypto'
@@ -25,8 +26,19 @@ const entries = new Map()
 /** @type {object[]} */
 const contactRequests = []
 
+function hashPinSync(pin) {
+  return createHash('sha256').update(`fertigation-binder:pin:${pin}`).digest('hex')
+}
+
+function isoAdd(iso, days) {
+  const date = new Date(`${iso}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
 function seedAthenaDemo() {
   const created = '2026-08-29T18:31:34.026Z'
+  const start = '2026-08-29'
   sites.set('athena-demo', {
     id: 'athena-demo',
     name: 'Athena Demo',
@@ -35,7 +47,7 @@ function seedAthenaDemo() {
     aroya_facility_id: null,
     owner_id: userIdFor('mock-owner@fertigationbinder.demo'),
     owner_email: 'mock-owner@fertigationbinder.demo',
-    pin_hash: 'local-demo-pin',
+    pin_hash: hashPinSync('1234'),
     status: 'active',
     created_at: created,
     aroya_key_saved: false,
@@ -56,26 +68,28 @@ function seedAthenaDemo() {
       id: cycleId,
       room_id: roomId,
       number: 1,
-      start_date: '2026-08-29',
+      start_date: start,
       status: 'in_progress',
     })
-    const entryId = randomUUID()
-    entries.set(entryId, {
-      id: entryId,
-      room_id: roomId,
-      date: '2026-08-29',
-      zone: 1,
-      cultivar: null,
-      feed_ml: 2200,
-      feed_ec: 2.4,
-      feed_ph: 5.9,
-      runoff_ml: 440,
-      runoff_ec: 2.6,
-      runoff_ph: 6.1,
-      notes: 'Demo collection',
-      created_at: created,
-      tech: 'WT',
-    })
+    for (let day = 0; day < 7; day += 1) {
+      const entryId = randomUUID()
+      entries.set(entryId, {
+        id: entryId,
+        room_id: roomId,
+        date: isoAdd(start, day),
+        zone: 1,
+        cultivar: null,
+        feed_ml: 2200 + day * 40 + i * 6,
+        feed_ec: Number((2.4 + day * 0.05).toFixed(2)),
+        feed_ph: Number((5.9 + (day % 3) * 0.1).toFixed(1)),
+        runoff_ml: 440 + day * 10,
+        runoff_ec: Number((2.6 + day * 0.04).toFixed(2)),
+        runoff_ph: Number((6.1 + (day % 2) * 0.1).toFixed(1)),
+        notes: day === 0 ? 'Demo collection' : null,
+        created_at: created,
+        tech: 'WT',
+      })
+    }
   }
 }
 
@@ -437,28 +451,90 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (path === '/rest/v1/cycles' && req.method === 'GET') {
-    const ids = inParam(url, 'room_id')
-    const roomId = eqParam(url, 'room_id')
-    const rows = [...cycles.values()].filter((cycle) => {
-      if (ids) return ids.includes(cycle.room_id)
-      if (roomId) return cycle.room_id === roomId
-      return true
-    })
-    json(res, 200, rows)
-    return
+  if (path === '/rest/v1/cycles') {
+    if (req.method === 'GET') {
+      const ids = inParam(url, 'room_id')
+      const roomId = eqParam(url, 'room_id')
+      const rows = [...cycles.values()].filter((cycle) => {
+        if (ids) return ids.includes(cycle.room_id)
+        if (roomId) return cycle.room_id === roomId
+        return true
+      })
+      json(res, 200, rows)
+      return
+    }
+    if (req.method === 'POST') {
+      const body = await readBody(req)
+      const row = {
+        id: body.id || randomUUID(),
+        room_id: body.room_id,
+        number: body.number,
+        start_date: body.start_date,
+        status: body.status || 'in_progress',
+      }
+      cycles.set(row.id, row)
+      json(res, 201, row, { 'Content-Type': 'application/vnd.pgrst.object+json' })
+      return
+    }
+    if (req.method === 'PATCH') {
+      const roomId = eqParam(url, 'room_id')
+      const status = eqParam(url, 'status')
+      const id = eqParam(url, 'id')
+      const body = await readBody(req)
+      const matched = [...cycles.values()].filter((cycle) => {
+        if (id && cycle.id !== id) return false
+        if (roomId && cycle.room_id !== roomId) return false
+        if (status && cycle.status !== status) return false
+        return true
+      })
+      for (const cycle of matched) Object.assign(cycle, body)
+      if (wantsSingle(req)) {
+        json(res, 200, matched[0] ?? {}, { 'Content-Type': 'application/vnd.pgrst.object+json' })
+        return
+      }
+      json(res, 200, matched)
+      return
+    }
   }
 
-  if (path === '/rest/v1/entries' && req.method === 'GET') {
-    const roomId = eqParam(url, 'room_id')
-    const since = String(url.searchParams.get('date') || '').replace(/^gte\./, '')
-    const rows = [...entries.values()].filter((entry) => {
-      if (roomId && entry.room_id !== roomId) return false
-      if (since && entry.date < since) return false
-      return true
-    })
-    json(res, 200, rows)
-    return
+  if (path === '/rest/v1/entries') {
+    if (req.method === 'GET') {
+      const roomId = eqParam(url, 'room_id')
+      const since = String(url.searchParams.get('date') || '').replace(/^gte\./, '')
+      const rows = [...entries.values()].filter((entry) => {
+        if (roomId && entry.room_id !== roomId) return false
+        if (since && entry.date < since) return false
+        return true
+      })
+      rows.sort((a, b) => String(b.date).localeCompare(String(a.date)) || a.zone - b.zone)
+      json(res, 200, rows)
+      return
+    }
+    if (req.method === 'POST') {
+      const body = await readBody(req)
+      const row = {
+        id: body.id || randomUUID(),
+        created_at: body.created_at || new Date().toISOString(),
+        cultivar: body.cultivar ?? null,
+        notes: body.notes ?? null,
+        tech: body.tech ?? null,
+        ...body,
+      }
+      entries.set(row.id, row)
+      json(res, 201, row, { 'Content-Type': 'application/vnd.pgrst.object+json' })
+      return
+    }
+    if (req.method === 'PATCH') {
+      const id = eqParam(url, 'id')
+      const row = id ? entries.get(id) : null
+      if (!row) {
+        json(res, 404, { message: 'Not found' })
+        return
+      }
+      Object.assign(row, await readBody(req))
+      json(res, 200, row, { 'Content-Type': 'application/vnd.pgrst.object+json' })
+      return
+    }
   }
 
   json(res, 404, { message: `No mock for ${req.method} ${path}` })

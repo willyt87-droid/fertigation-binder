@@ -24,7 +24,9 @@ import {
 import {
   clearSession,
   loadConfig,
+  loadLastRoomId,
   loadSessionSiteId,
+  saveLastRoomId,
   saveSessionSiteId,
 } from './lib/storage'
 import { ViewAsOwnerBanner } from './components/ViewAsOwnerBanner'
@@ -83,6 +85,7 @@ export default function App() {
   const [viewAsOwner, setViewAsOwner] = useState<Site | null>(null)
   const [viewError, setViewError] = useState<string | null>(null)
   const [appHash, setAppHash] = useState(() => currentHash())
+  const [lastRoomId, setLastRoomId] = useState<string | null>(null)
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId)
   const selectedCycle = selectedRoom
@@ -171,6 +174,7 @@ export default function App() {
       setSettingsSite(null)
       setStartingCycle(false)
       setEntryEditor(null)
+      setLastRoomId(loadLastRoomId(site.id))
       await loadSiteData(site, db)
       return site
     },
@@ -310,7 +314,13 @@ export default function App() {
     saveSessionSiteId(site.id)
     setSessionSite(site)
     setSelectedRoomId(null)
+    setLastRoomId(loadLastRoomId(site.id))
     await loadSiteData(site, client)
+  }
+
+  function rememberRoom(siteId: string, roomId: string) {
+    saveLastRoomId(siteId, roomId)
+    setLastRoomId(roomId)
   }
 
   async function handleStartCycle(startDate: string) {
@@ -334,8 +344,23 @@ export default function App() {
       throw new Error(`Date must be on or after cycle start (${selectedCycle.start_date}).`)
     }
     await saveEntry(client, { id, roomId: selectedRoom.id, draft })
+    rememberRoom(sessionSite.id, selectedRoom.id)
     setEntryEditor(null)
     await loadRoomEntries(selectedRoom, cycles, client)
+  }
+
+  async function handleQuickSave(room: Room, draft: EntryDraft) {
+    if (viewAsOwner) return
+    if (!client || !sessionSite) return
+    const cycle = cycles.find((item) => item.room_id === room.id && item.status === 'in_progress')
+    if (room.type === 'flower' && cycle && draft.date < cycle.start_date) {
+      throw new Error(`Date must be on or after cycle start (${cycle.start_date}).`)
+    }
+    await saveEntry(client, { roomId: room.id, draft })
+    rememberRoom(sessionSite.id, room.id)
+    if (selectedRoom?.id === room.id) {
+      await loadRoomEntries(room, cycles, client)
+    }
   }
 
   function finishReconnect() {
@@ -443,8 +468,11 @@ export default function App() {
           <OverviewScreen
             rooms={rooms}
             cycles={cycles}
+            canWrite={false}
+            defaultRoomId={lastRoomId}
             onOpenRoom={async (room) => {
               setSelectedRoomId(room.id)
+              setLastRoomId(room.id)
               await loadRoomEntries(room, cycles, client)
             }}
           />
@@ -634,8 +662,13 @@ export default function App() {
         <OverviewScreen
           rooms={rooms}
           cycles={cycles}
+          canWrite
+          defaultRoomId={lastRoomId}
+          onSaveQuickEntry={handleQuickSave}
+          onRememberRoom={(roomId) => rememberRoom(sessionSite.id, roomId)}
           onOpenRoom={async (room) => {
             setSelectedRoomId(room.id)
+            rememberRoom(sessionSite.id, room.id)
             await loadRoomEntries(room, cycles, client)
           }}
         />
