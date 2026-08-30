@@ -103,6 +103,7 @@ export function RoomLogChart({ entries }: RoomLogChartProps) {
                 y1: {
                   position: 'right' as const,
                   suggestedMin: 0,
+                  suggestedMax: 4,
                   ticks: { color: '#22d3ee', font: { size: 10 } },
                   title: { display: true, text: 'EC', color: '#22d3ee', font: { size: 10, weight: 700 } },
                   grid: { drawOnChartArea: false },
